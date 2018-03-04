@@ -43,10 +43,10 @@ params = {
     # 'colsample_bytree': 0.9,
     'metric': {'binary_logloss'},
     'metric_freq': 1,
-    # 'is_training_metric': True,
-    'num_leaves': 31,
+    'is_training_metric': False,
+    'num_leaves': 64,
     'feature_fraction': 0.5,
-    'bagging_fraction': 0.9,
+    'bagging_fraction': 0.7,
     # 'bagging_freq': 5,
     'verbose': -1,
     'min_data_in_leaf': 5
@@ -134,13 +134,15 @@ def submit():
     result = pd.concat([id_test, y], axis=1)
     time_format = '%Y-%m-%d-%H-%M-%S'
     time_now = datetime.datetime.now()
-    result.to_csv('result/result_%s.csv'%time_now.strftime(time_format), index=False) # for backup
+    bak_file = 'result/result_%s.csv'%time_now.strftime(time_format)
+    result.to_csv(bak_file, index=False) # for backup
     result.to_csv('result/result.csv', index=False)
+    print bak_file
     print y.mean()
 
 
 def main():
-    # cv()
+    cv()
     submit()
 
 if __name__ == '__main__':
