@@ -69,6 +69,7 @@ def train():
         feature_score = model.get_fscore()
         feature_score = sorted(feature_score.items(), key=lambda x:x[1],reverse=True)
         fs = []
+        print '{} features'.format(len(feature_score))
         for (key,value) in feature_score:
             fs.append("{0},{1}\n".format(key,value))
         f.writelines(fs)
