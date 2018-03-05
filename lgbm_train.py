@@ -1,8 +1,10 @@
 # coding=utf-8
+
 import lightgbm as lgb
 import pandas as pd
 import numpy as np
 import datetime
+import sys
 
 from sklearn.cross_validation import KFold
 from sklearn.externals import joblib
@@ -35,11 +37,10 @@ params = {
     'objective': 'binary',
     # 'num_class': 2,
     # 'num_leaves': 35,
-    # 'max_depth':10,
     'learning_rate': 0.02,
     # 'n_estimators':100,
     'min_split_gain': 1.0,
-    'min_child_weight': 1.2,
+    # 'min_child_weight': 1.2,
     # 'colsample_bytree': 0.9,
     'metric': {'binary_logloss'},
     'metric_freq': 1,
@@ -47,88 +48,60 @@ params = {
     'num_leaves': 64,
     'feature_fraction': 0.5,
     'bagging_fraction': 0.7,
-    # 'bagging_freq': 5,
+    'bagging_freq': 5,
     'verbose': -1,
-    'min_data_in_leaf': 5
+    'min_data_in_leaf': 100,    
+    # 'max_bin': 255,
+    'max_depth':6,
+    'min_sum_hessian_in_leaf': 6,
+    # 'is_unbalance': True
 }
 
-def cv():
-    K = 5
-    kf = KFold(train_df.shape[0], K, shuffle=True, random_state=0)
-    train_loss_list = []
-    val_loss_list = []
+def train():
     feature_name = list(train_df.columns[1:-1])
     print feature_name
-    i = 0
-    for train_index, val_index in kf:
-        i += 1
-        x_train, x_val = data_train[train_index], data_train[val_index]
-        y_train, y_val = label_train[train_index], label_train[val_index]
 
-        print x_train.shape, y_train.shape
-        print x_val.shape, y_val.shape
+    print data_train.shape, label_train.shape
+    print data_val.shape, label_val.shape
 
-        lgb_train = lgb.Dataset(x_train, y_train)
-        lgb_eval = lgb.Dataset(x_val, y_val, reference=lgb_train)
+    lgb_train = lgb.Dataset(data_train, label_train)
+    lgb_eval = lgb.Dataset(data_val, label_val, reference=lgb_train)
 
-        gbm = lgb.train(
-            params,
-            lgb_train,
-            num_boost_round=1000,
-            valid_sets=lgb_eval,
-            feature_name=feature_name,
-            categorical_feature=[
-                'user_gender_id', 'user_occupation_id'
-            ],
-            early_stopping_rounds=20)
+    gbm = lgb.train(
+        params,
+        lgb_train,
+        num_boost_round=10000,
+        valid_sets=lgb_eval,
+        feature_name=feature_name,
+        categorical_feature=[
+            'user_gender_id', 'user_occupation_id'
+        ],
+        early_stopping_rounds=200)
 
-        y_pred = gbm.predict(x_val, num_iteration=gbm.best_iteration)
-        train_loss = log_loss(y_val, y_pred)
-        train_loss_list.append(train_loss)
+    y_pred = gbm.predict(data_train, num_iteration=gbm.best_iteration)
+    train_loss = log_loss(label_train, y_pred)
 
-        y_pred = gbm.predict(data_val, num_iteration=gbm.best_iteration)
-        val_loss = log_loss(label_val, y_pred)
-        val_loss_list.append(val_loss)
+    y_pred = gbm.predict(data_val, num_iteration=gbm.best_iteration)
+    val_loss = log_loss(label_val, y_pred)
 
-        joblib.dump(gbm, 'model/gbm_kfold_{}'.format(i))
-
-        print 'train_loss: {:4}, val_loss: {:4}'.format(train_loss, val_loss)
-
-    print train_loss_list
-    print np.mean(train_loss_list)
-    print val_loss_list
-    print np.mean(val_loss_list)
-
-    gbm1 = joblib.load('model/gbm_kfold_1')
-    gbm2 = joblib.load('model/gbm_kfold_2')
-    gbm3 = joblib.load('model/gbm_kfold_3')
-    gbm4 = joblib.load('model/gbm_kfold_4')
-    gbm5 = joblib.load('model/gbm_kfold_5')
-
-    y_pred1 = gbm1.predict(data_val, num_iteration=gbm1.best_iteration)
-    y_pred2 = gbm2.predict(data_val, num_iteration=gbm2.best_iteration)
-    y_pred3 = gbm3.predict(data_val, num_iteration=gbm3.best_iteration)
-    y_pred4 = gbm4.predict(data_val, num_iteration=gbm4.best_iteration)
-    y_pred5 = gbm5.predict(data_val, num_iteration=gbm5.best_iteration)
-
-    y = (y_pred1 + y_pred2 + y_pred3 + y_pred4 + y_pred5) / 5
-    print 'val logloss: ', log_loss(label_val, y)
+    joblib.dump(gbm, 'model/gbm')
+    print 'train_loss: {:4}, val_loss: {:4}'.format(train_loss, val_loss)
+    with open('feature_importance.txt','w') as f:
+        importance = gbm.feature_importance()
+        names = gbm.feature_name()
+        pair = zip(names, importance)
+        pair.sort(key=lambda x:x[1], reverse=True)
+        print '{} features'.format(len(names))
+        print pair
+        for item in pair:
+            string = item[0] + ', ' + str(item[1]) + '\n'
+            f.write(string)
 
     
 def submit():
-    gbm1 = joblib.load('model/gbm_kfold_1')
-    gbm2 = joblib.load('model/gbm_kfold_2')
-    gbm3 = joblib.load('model/gbm_kfold_3')
-    gbm4 = joblib.load('model/gbm_kfold_4')
-    gbm5 = joblib.load('model/gbm_kfold_5')
+    gbm = joblib.load('model/gbm')
 
-    y_pred1 = gbm1.predict(data_test, num_iteration=gbm1.best_iteration)
-    y_pred2 = gbm2.predict(data_test, num_iteration=gbm2.best_iteration)
-    y_pred3 = gbm3.predict(data_test, num_iteration=gbm3.best_iteration)
-    y_pred4 = gbm4.predict(data_test, num_iteration=gbm4.best_iteration)
-    y_pred5 = gbm5.predict(data_test, num_iteration=gbm5.best_iteration)
-
-    y = (y_pred1 + y_pred2 + y_pred3 + y_pred4 + y_pred5) / 5
+    y = gbm.predict(data_test, num_iteration=gbm.best_iteration)
 
     y = pd.Series(y, name='predicted_score')
     result = pd.concat([id_test, y], axis=1)
@@ -142,8 +115,10 @@ def submit():
 
 
 def main():
-    cv()
-    submit()
+    if len(sys.argv) == 2 and sys.argv[1] == 'submit':
+        submit()
+    else:
+        train()
 
 if __name__ == '__main__':
     main()
