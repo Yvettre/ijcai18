@@ -19,21 +19,24 @@ import datetime
 # test_data : 
 #   dataset6: 2018-09-25 , features from 2018-09-23~2018-09-24
 
+
 def get_match_level(s):
     item_category_list = s['item_category_list'].split(';')
     item_property_list = s['item_property_list'].split(';')
     predict_category_property = s['predict_category_property'].split(';')
     max_match_level = 0
+
     for item in predict_category_property:
         match_level = 0
         cate = item.split(':')[0]
         if cate in item_category_list:
             match_level += (10 * (1+item_category_list.index(cate)))
             prop_list = item.split(':')[1].split(',')
-            match_prop_set = set(prop_list).union(set(item_property_list))
+            match_prop_set = set(prop_list) & set(item_property_list) # 取交集
             match_level += (10 * (len(match_prop_set) / float(len(prop_list))))
         if match_level > max_match_level:
             max_match_level = match_level
+
     return max_match_level
 
 
@@ -43,9 +46,9 @@ def get_time(s):
     return h
     # m = datetime.datetime.fromtimestamp(s).minute
     # if m >= 30:
-    #     return h + 0.5
+    #     return 2*h + 1
     # else:
-    #     return h
+    #     return 2*h
 
 def main():
     train_table = pd.read_csv(
@@ -65,6 +68,17 @@ def main():
     test_table['context_day'] = test_table['context_timestamp'].apply(
         lambda x: datetime.datetime.fromtimestamp(x).day)
 
+    # get predict major cate
+    train_table['predict_major_cate'] = train_table['predict_category_property'].apply(
+        lambda x: x.split(':')[0])
+    test_table['predict_major_cate'] = test_table['predict_category_property'].apply(
+        lambda x: x.split(':')[0])
+    le =preprocessing.LabelEncoder()
+    le.fit(list(train_table['predict_major_cate']) + list(test_table['predict_major_cate']))
+    train_table['predict_major_cate'] = le.transform(train_table['predict_major_cate'])
+    test_table['predict_major_cate'] = le.transform(test_table['predict_major_cate'])
+    del le
+
 
     # basic feat
     instance_id = ['instance_id']
@@ -76,7 +90,7 @@ def main():
         'user_gender_id', 'user_age_level', 'user_occupation_id',
         'user_star_level'
     }
-    cont_feat_set = {'context_time', 'context_page_id'}
+    cont_feat_set = {'context_time', 'context_page_id', 'predict_major_cate'}
     shop_feat_set = {
         'shop_review_num_level', 'shop_review_positive_rate',
         'shop_star_level', 'shop_score_service', 'shop_score_delivery',
@@ -284,8 +298,67 @@ def main():
         df['brand_age_rate'] = df['brand_age_trade_num'] / df['item_brand_trade_num']
         df['brand_age_rate'].fillna(0, inplace=True) 
         # ==========================================================================================
-
+        ## leakage feature
+        # today_shop_view_num
+        leak_feat_set.add('today_shop_view_num')
+        today_shop_view_num = df[['shop_id']].copy()
+        today_shop_view_num['today_shop_view_num'] = 1
+        today_shop_view_num = today_shop_view_num.groupby('shop_id').agg('sum').reset_index()
+        df = pd.merge(df, today_shop_view_num, on=['shop_id'], how='left')
+        del today_shop_view_num
+        # today_item_view_num
+        leak_feat_set.add('today_item_view_num')
+        today_item_view_num = df[['item_id']].copy()
+        today_item_view_num['today_item_view_num'] = 1
+        today_item_view_num = today_item_view_num.groupby('item_id').agg('sum').reset_index()
+        df = pd.merge(df, today_item_view_num, on=['item_id'], how='left')
+        del today_item_view_num
+        # today_user_view_shop_rev_time
+        # 当前访问是今天用户访问该商店的倒数第几次
+        leak_feat_set.add('today_user_view_shop_rev_time')
+        leak_feat_set.add('today_user_view_shop_time')
+        leak_feat_set.add('today_user_view_shop_num')
+        tmp = df[['user_id', 'shop_id', 'context_timestamp']].copy()
+        # 分组排序，有点蛋疼，记住这个写法
+        df['today_user_view_shop_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['shop_id']]).rank(ascending=0, method='dense')
+        df['today_user_view_shop_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['shop_id']]).rank(ascending=1, method='dense')
+        df['today_user_view_shop_num'] = df['today_user_view_shop_time'] + df['today_user_view_shop_rev_time']
+        tmp.drop(['context_timestamp'], axis=1, inplace=True)
+        del tmp
+        # today_user_view_item_rev_time
+        # 当前访问是今天用户访问该商品的倒数第几次
+        leak_feat_set.add('today_user_view_item_rev_time')
+        leak_feat_set.add('today_user_view_item_time')
+        leak_feat_set.add('today_user_view_item_num')
+        tmp = df[['user_id', 'item_id', 'context_timestamp']].copy()
+        df['today_user_view_item_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_id']]).rank(ascending=0, method='dense')
+        df['today_user_view_item_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_id']]).rank(ascending=1, method='dense')
+        df['today_user_view_item_num'] = df['today_user_view_item_time'] + df['today_user_view_item_rev_time']
+        del tmp
+        # today_user_view_brand_rev_time        
+        # 当前访问是今天用户访问该品牌的倒数第几次
+        leak_feat_set.add('today_user_view_brand_rev_time')
+        leak_feat_set.add('today_user_view_brand_time')
+        leak_feat_set.add('today_user_view_brand_num')
+        tmp = df[['user_id', 'item_brand_id', 'context_timestamp']].copy()
+        df['today_user_view_brand_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_brand_id']]).rank(ascending=0, method='dense')
+        df['today_user_view_brand_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_brand_id']]).rank(ascending=1, method='dense')
+        df['today_user_view_brand_num'] = df['today_user_view_brand_time'] + df['today_user_view_brand_rev_time']
+        del tmp
+        # today_user_view_cat_rev_time        
+        # 当前访问是今天用户访问该类别商品的倒数第几次
+        leak_feat_set.add('today_user_view_cate_rev_time')
+        leak_feat_set.add('today_user_view_cate_time')
+        leak_feat_set.add('today_user_view_cate_num')
+        tmp = df[['user_id', 'predict_major_cate', 'context_timestamp']].copy()
+        df['today_user_view_cate_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['predict_major_cate']]).rank(ascending=0, method='dense')
+        df['today_user_view_cate_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['predict_major_cate']]).rank(ascending=1, method='dense')
+        df['today_user_view_cate_num'] = df['today_user_view_cate_time'] + df['today_user_view_cate_rev_time']
+        del tmp
+        # ==========================================================================================
         df_list.append(df)
+
+        
 
     train_table = pd.concat(df_list[:-2], axis=0)
     val_table = df_list[-2]

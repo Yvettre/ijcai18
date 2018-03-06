@@ -16,7 +16,7 @@ def main():
     table_val = pd.read_csv('data/val_feat.csv')
     table_test = pd.read_csv('data/test_feat.csv')
 
-    watch_feat = 'item_trade_num'
+    watch_feat = 'item_brand_trade_rate'
 
     print 'feature name : {}'.format(watch_feat)
 

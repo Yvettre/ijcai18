@@ -35,13 +35,8 @@ params = {
     'task': 'train',
     'boosting': 'gbdt',
     'objective': 'binary',
-    # 'num_class': 2,
-    # 'num_leaves': 35,
     'learning_rate': 0.02,
-    # 'n_estimators':100,
     'min_split_gain': 1.0,
-    # 'min_child_weight': 1.2,
-    # 'colsample_bytree': 0.9,
     'metric': {'binary_logloss'},
     'metric_freq': 1,
     'is_training_metric': False,
@@ -51,10 +46,8 @@ params = {
     'bagging_freq': 5,
     'verbose': -1,
     'min_data_in_leaf': 100,    
-    # 'max_bin': 255,
     'max_depth':6,
     'min_sum_hessian_in_leaf': 6,
-    # 'is_unbalance': True
 }
 
 def train():
@@ -74,7 +67,7 @@ def train():
         valid_sets=lgb_eval,
         feature_name=feature_name,
         categorical_feature=[
-            'user_gender_id', 'user_occupation_id'
+            'user_gender_id', 'user_occupation_id', 'predict_major_cate'
         ],
         early_stopping_rounds=200)
 
