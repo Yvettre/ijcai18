@@ -79,6 +79,12 @@ def main():
     test_table['predict_major_cate'] = le.transform(test_table['predict_major_cate'])
     del le
 
+    # get search keyword
+    le = preprocessing.LabelEncoder()
+    le.fit(list(train_table['predict_category_property']) + list(test_table['predict_category_property']))
+    train_table['search_key'] = le.transform(train_table['predict_category_property'])
+    test_table['search_key'] = le.transform(test_table['predict_category_property'])
+    del le
 
     # basic feat
     instance_id = ['instance_id']
@@ -90,7 +96,7 @@ def main():
         'user_gender_id', 'user_age_level', 'user_occupation_id',
         'user_star_level'
     }
-    cont_feat_set = {'context_time', 'context_page_id', 'predict_major_cate'}
+    cont_feat_set = {'context_time', 'context_page_id', 'predict_major_cate'}# search_key 不要加，会过拟合
     shop_feat_set = {
         'shop_review_num_level', 'shop_review_positive_rate',
         'shop_star_level', 'shop_score_service', 'shop_score_delivery',
@@ -318,43 +324,61 @@ def main():
         leak_feat_set.add('today_user_view_shop_rev_time')
         leak_feat_set.add('today_user_view_shop_time')
         leak_feat_set.add('today_user_view_shop_num')
+        leak_feat_set.add('today_user_view_shop_pct')
         tmp = df[['user_id', 'shop_id', 'context_timestamp']].copy()
         # 分组排序，有点蛋疼，记住这个写法
         df['today_user_view_shop_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['shop_id']]).rank(ascending=0, method='dense')
         df['today_user_view_shop_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['shop_id']]).rank(ascending=1, method='dense')
         df['today_user_view_shop_num'] = df['today_user_view_shop_time'] + df['today_user_view_shop_rev_time'] - 1
-        tmp.drop(['context_timestamp'], axis=1, inplace=True)
+        df['today_user_view_shop_pct'] = df['today_user_view_shop_time'] / df['today_user_view_shop_num']
         del tmp
         # today_user_view_item_rev_time
         # 当前访问是今天用户访问该商品的倒数第几次
         leak_feat_set.add('today_user_view_item_rev_time')
         leak_feat_set.add('today_user_view_item_time')
         leak_feat_set.add('today_user_view_item_num')
+        leak_feat_set.add('today_user_view_item_pct')
         tmp = df[['user_id', 'item_id', 'context_timestamp']].copy()
         df['today_user_view_item_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_id']]).rank(ascending=0, method='dense')
         df['today_user_view_item_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_id']]).rank(ascending=1, method='dense')
         df['today_user_view_item_num'] = df['today_user_view_item_time'] + df['today_user_view_item_rev_time'] - 1
+        df['today_user_view_item_pct'] = df['today_user_view_item_time'] / df['today_user_view_item_num']
         del tmp
         # today_user_view_brand_rev_time        
         # 当前访问是今天用户访问该品牌的倒数第几次
         leak_feat_set.add('today_user_view_brand_rev_time')
         leak_feat_set.add('today_user_view_brand_time')
         leak_feat_set.add('today_user_view_brand_num')
+        leak_feat_set.add('today_user_view_brand_pct')
         tmp = df[['user_id', 'item_brand_id', 'context_timestamp']].copy()
         df['today_user_view_brand_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_brand_id']]).rank(ascending=0, method='dense')
         df['today_user_view_brand_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_brand_id']]).rank(ascending=1, method='dense')
         df['today_user_view_brand_num'] = df['today_user_view_brand_time'] + df['today_user_view_brand_rev_time'] - 1
+        df['today_user_view_brand_pct'] = df['today_user_view_brand_time'] / df['today_user_view_brand_num']
         del tmp
         # today_user_view_cat_rev_time        
         # 当前访问是今天用户访问该类别商品的倒数第几次
         leak_feat_set.add('today_user_view_cate_rev_time')
         leak_feat_set.add('today_user_view_cate_time')
         leak_feat_set.add('today_user_view_cate_num')
+        leak_feat_set.add('today_user_view_cate_pct')
         tmp = df[['user_id', 'predict_major_cate', 'context_timestamp']].copy()
         df['today_user_view_cate_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['predict_major_cate']]).rank(ascending=0, method='dense')
         df['today_user_view_cate_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['predict_major_cate']]).rank(ascending=1, method='dense')
         df['today_user_view_cate_num'] = df['today_user_view_cate_time'] + df['today_user_view_cate_rev_time'] - 1
+        df['today_user_view_cate_pct'] = df['today_user_view_cate_time'] / df['today_user_view_cate_num'] 
         del tmp
+        # today_user_view_keyword_rev_time
+        # 当前访问的关键词广告是用户今天访问的倒数第几次
+        leak_feat_set.add('today_user_view_keyword_rev_time')
+        leak_feat_set.add('today_user_view_keyword_time')
+        leak_feat_set.add('today_user_view_keyword_num')
+        leak_feat_set.add('today_user_view_keyword_pct')
+        tmp = df[['user_id', 'search_key', 'context_timestamp']].copy()
+        df['today_user_view_keyword_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['search_key']]).rank(ascending=0, method='dense')
+        df['today_user_view_keyword_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['search_key']]).rank(ascending=1, method='dense')
+        df['today_user_view_keyword_num'] = df['today_user_view_keyword_time'] + df['today_user_view_keyword_rev_time'] - 1
+        df['today_user_view_keyword_pct'] = df['today_user_view_keyword_time'] / df['today_user_view_keyword_num']
         # ==========================================================================================
         df_list.append(df)
 
