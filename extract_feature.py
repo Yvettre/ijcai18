@@ -322,7 +322,7 @@ def main():
         # 分组排序，有点蛋疼，记住这个写法
         df['today_user_view_shop_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['shop_id']]).rank(ascending=0, method='dense')
         df['today_user_view_shop_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['shop_id']]).rank(ascending=1, method='dense')
-        df['today_user_view_shop_num'] = df['today_user_view_shop_time'] + df['today_user_view_shop_rev_time']
+        df['today_user_view_shop_num'] = df['today_user_view_shop_time'] + df['today_user_view_shop_rev_time'] - 1
         tmp.drop(['context_timestamp'], axis=1, inplace=True)
         del tmp
         # today_user_view_item_rev_time
@@ -333,7 +333,7 @@ def main():
         tmp = df[['user_id', 'item_id', 'context_timestamp']].copy()
         df['today_user_view_item_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_id']]).rank(ascending=0, method='dense')
         df['today_user_view_item_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_id']]).rank(ascending=1, method='dense')
-        df['today_user_view_item_num'] = df['today_user_view_item_time'] + df['today_user_view_item_rev_time']
+        df['today_user_view_item_num'] = df['today_user_view_item_time'] + df['today_user_view_item_rev_time'] - 1
         del tmp
         # today_user_view_brand_rev_time        
         # 当前访问是今天用户访问该品牌的倒数第几次
@@ -343,7 +343,7 @@ def main():
         tmp = df[['user_id', 'item_brand_id', 'context_timestamp']].copy()
         df['today_user_view_brand_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_brand_id']]).rank(ascending=0, method='dense')
         df['today_user_view_brand_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_brand_id']]).rank(ascending=1, method='dense')
-        df['today_user_view_brand_num'] = df['today_user_view_brand_time'] + df['today_user_view_brand_rev_time']
+        df['today_user_view_brand_num'] = df['today_user_view_brand_time'] + df['today_user_view_brand_rev_time'] - 1
         del tmp
         # today_user_view_cat_rev_time        
         # 当前访问是今天用户访问该类别商品的倒数第几次
@@ -353,7 +353,7 @@ def main():
         tmp = df[['user_id', 'predict_major_cate', 'context_timestamp']].copy()
         df['today_user_view_cate_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['predict_major_cate']]).rank(ascending=0, method='dense')
         df['today_user_view_cate_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['predict_major_cate']]).rank(ascending=1, method='dense')
-        df['today_user_view_cate_num'] = df['today_user_view_cate_time'] + df['today_user_view_cate_rev_time']
+        df['today_user_view_cate_num'] = df['today_user_view_cate_time'] + df['today_user_view_cate_rev_time'] - 1
         del tmp
         # ==========================================================================================
         df_list.append(df)
