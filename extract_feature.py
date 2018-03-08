@@ -100,7 +100,7 @@ def main():
     shop_feat_set = {
         'shop_review_num_level', 'shop_review_positive_rate',
         'shop_star_level', 'shop_score_service', 'shop_score_delivery',
-        'shop_score_description', 'shop_toal_score'
+        'shop_score_description', 'shop_total_score'
     }
     cross_feat_set = set()
     leak_feat_set = set()
@@ -117,14 +117,14 @@ def main():
     train_table['user_star_level'] = train_table['user_star_level'] - 3000
     train_table['context_page_id'] = train_table['context_page_id'] - 4000
     train_table['shop_star_level'] = train_table['shop_star_level'] - 5000
-    train_table['shop_toal_score'] = 1.0*train_table['shop_score_service'] + 0.8*train_table['shop_score_delivery'] + 1.2*train_table['shop_score_description']
+    train_table['shop_total_score'] = 1.0*train_table['shop_score_service'] + 0.8*train_table['shop_score_delivery'] + 1.2*train_table['shop_score_description']
 
     test_table['user_age_level'] = test_table['user_age_level'] - 1000
     test_table['user_occupation_id'] = test_table['user_occupation_id'] - 2000
     test_table['user_star_level'] = test_table['user_star_level'] - 3000
     test_table['context_page_id'] = test_table['context_page_id'] - 4000
     test_table['shop_star_level'] = test_table['shop_star_level'] - 5000
-    test_table['shop_toal_score'] = 1.0*test_table['shop_score_service'] + 0.8*test_table['shop_score_delivery'] + 1.2*test_table['shop_score_description']
+    test_table['shop_total_score'] = 1.0*test_table['shop_score_service'] + 0.8*test_table['shop_score_delivery'] + 1.2*test_table['shop_score_description']
 
     
     df_list = []
