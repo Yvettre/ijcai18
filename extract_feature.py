@@ -100,7 +100,7 @@ def main():
     shop_feat_set = {
         'shop_review_num_level', 'shop_review_positive_rate',
         'shop_star_level', 'shop_score_service', 'shop_score_delivery',
-        'shop_score_description'
+        'shop_score_description', 'shop_toal_score'
     }
     cross_feat_set = set()
     leak_feat_set = set()
@@ -117,12 +117,15 @@ def main():
     train_table['user_star_level'] = train_table['user_star_level'] - 3000
     train_table['context_page_id'] = train_table['context_page_id'] - 4000
     train_table['shop_star_level'] = train_table['shop_star_level'] - 5000
+    train_table['shop_toal_score'] = 1.0*train_table['shop_score_service'] + 0.8*train_table['shop_score_delivery'] + 1.2*train_table['shop_score_description']
 
     test_table['user_age_level'] = test_table['user_age_level'] - 1000
     test_table['user_occupation_id'] = test_table['user_occupation_id'] - 2000
     test_table['user_star_level'] = test_table['user_star_level'] - 3000
     test_table['context_page_id'] = test_table['context_page_id'] - 4000
     test_table['shop_star_level'] = test_table['shop_star_level'] - 5000
+    test_table['shop_toal_score'] = 1.0*test_table['shop_score_service'] + 0.8*test_table['shop_score_delivery'] + 1.2*test_table['shop_score_description']
+
     
     df_list = []
     for day in xrange(20, 26):
@@ -154,7 +157,7 @@ def main():
         df['item_view_num'] = df['item_trade_num'] + df['item_not_trade_num']
         # item_trade_rate
         item_feat_set.add('item_trade_rate')
-        df['item_trade_rate'] = df['item_trade_num'] / df['item_view_num']
+        df['item_trade_rate'] = df['item_trade_num'] / (1 + df['item_view_num'])
         df['item_trade_rate'].fillna(0, inplace=True)
 
         # # item_brand_trade_num
@@ -177,7 +180,7 @@ def main():
         df['item_brand_view_num'] = df['item_brand_trade_num'] + df['item_brand_not_trade_num']
         # item_brand_trade_rate
         item_feat_set.add('item_brand_trade_rate')
-        df['item_brand_trade_rate'] = df['item_brand_trade_num'] / df['item_brand_view_num']
+        df['item_brand_trade_rate'] = df['item_brand_trade_num'] / (1 + df['item_brand_view_num'])
         df['item_brand_trade_rate'].fillna(0, inplace=True)
         # ==========================================================================================
         ## shop_feature
@@ -201,7 +204,7 @@ def main():
         df['shop_view_num'] = df['shop_trade_num'] + df['shop_not_trade_num']
         # shop_trade_rate
         shop_feat_set.add('shop_trade_rate')
-        df['shop_trade_rate'] = df['shop_trade_num'] / df['shop_view_num']
+        df['shop_trade_rate'] = df['shop_trade_num'] / (1 + df['shop_view_num'])
         df['shop_trade_rate'].fillna(0, inplace=True)
         # shop_score_service_inc
         shop_feat_set.add('shop_score_service_inc')        
@@ -252,7 +255,7 @@ def main():
         df['user_gender_view_num'] = df['user_gender_trade_num'] + df['user_gender_not_trade_num']
         # user_gender_trade_rate
         user_feat_set.add('user_gender_trade_rate')
-        df['user_gender_trade_rate'] = df['user_gender_trade_num'] / df['user_gender_view_num']
+        df['user_gender_trade_rate'] = df['user_gender_trade_num'] / (1 + df['user_gender_view_num'])
         df['user_gender_trade_rate'].fillna(0, inplace=True)
         # user_occupation_trade_num
         user_feat_set.add('user_occupation_trade_num')
@@ -274,7 +277,7 @@ def main():
         df['user_occupation_view_num'] = df['user_occupation_trade_num'] + df['user_occupation_not_trade_num']
         # user_occupation_trade_rate
         user_feat_set.add('user_occupation_trade_rate')
-        df['user_occupation_trade_rate'] = df['user_occupation_trade_num'] / df['user_occupation_view_num']
+        df['user_occupation_trade_rate'] = df['user_occupation_trade_num'] / (1 + df['user_occupation_view_num'])
         df['user_occupation_trade_rate'].fillna(0, inplace=True)
         # ==========================================================================================
         ## context_feature
@@ -290,7 +293,7 @@ def main():
         del brand_gender_trade_num
         # brand_gender_rate
         cross_feat_set.add('brand_gender_rate')
-        df['brand_gender_rate'] = df['brand_gender_trade_num'] / df['item_brand_trade_num']
+        df['brand_gender_rate'] = df['brand_gender_trade_num'] / (1 + df['item_brand_trade_num'])
         df['brand_gender_rate'].fillna(0, inplace=True)
         # brand_age_trade_num
         cross_feat_set.add('brand_age_trade_num')
@@ -301,7 +304,7 @@ def main():
         del brand_age_trade_num
         # brand_age_rate
         cross_feat_set.add('brand_age_rate')
-        df['brand_age_rate'] = df['brand_age_trade_num'] / df['item_brand_trade_num']
+        df['brand_age_rate'] = df['brand_age_trade_num'] / (1 + df['item_brand_trade_num'])
         df['brand_age_rate'].fillna(0, inplace=True) 
         # ==========================================================================================
         ## leakage feature
@@ -330,7 +333,7 @@ def main():
         df['today_user_view_shop_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['shop_id']]).rank(ascending=0, method='dense')
         df['today_user_view_shop_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['shop_id']]).rank(ascending=1, method='dense')
         df['today_user_view_shop_num'] = df['today_user_view_shop_time'] + df['today_user_view_shop_rev_time'] - 1
-        df['today_user_view_shop_pct'] = df['today_user_view_shop_time'] / df['today_user_view_shop_num']
+        df['today_user_view_shop_pct'] = df['today_user_view_shop_time'] / (1 + df['today_user_view_shop_num'])
         del tmp
         # today_user_view_item_rev_time
         # 当前访问是今天用户访问该商品的倒数第几次
@@ -342,7 +345,7 @@ def main():
         df['today_user_view_item_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_id']]).rank(ascending=0, method='dense')
         df['today_user_view_item_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_id']]).rank(ascending=1, method='dense')
         df['today_user_view_item_num'] = df['today_user_view_item_time'] + df['today_user_view_item_rev_time'] - 1
-        df['today_user_view_item_pct'] = df['today_user_view_item_time'] / df['today_user_view_item_num']
+        df['today_user_view_item_pct'] = df['today_user_view_item_time'] / (1 + df['today_user_view_item_num'])
         del tmp
         # today_user_view_brand_rev_time        
         # 当前访问是今天用户访问该品牌的倒数第几次
@@ -354,7 +357,7 @@ def main():
         df['today_user_view_brand_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_brand_id']]).rank(ascending=0, method='dense')
         df['today_user_view_brand_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_brand_id']]).rank(ascending=1, method='dense')
         df['today_user_view_brand_num'] = df['today_user_view_brand_time'] + df['today_user_view_brand_rev_time'] - 1
-        df['today_user_view_brand_pct'] = df['today_user_view_brand_time'] / df['today_user_view_brand_num']
+        df['today_user_view_brand_pct'] = df['today_user_view_brand_time'] / (1 + df['today_user_view_brand_num'])
         del tmp
         # today_user_view_cat_rev_time        
         # 当前访问是今天用户访问该类别商品的倒数第几次
@@ -366,7 +369,7 @@ def main():
         df['today_user_view_cate_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['predict_major_cate']]).rank(ascending=0, method='dense')
         df['today_user_view_cate_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['predict_major_cate']]).rank(ascending=1, method='dense')
         df['today_user_view_cate_num'] = df['today_user_view_cate_time'] + df['today_user_view_cate_rev_time'] - 1
-        df['today_user_view_cate_pct'] = df['today_user_view_cate_time'] / df['today_user_view_cate_num'] 
+        df['today_user_view_cate_pct'] = df['today_user_view_cate_time'] / (1 + df['today_user_view_cate_num'])
         del tmp
         # today_user_view_keyword_rev_time
         # 当前访问的关键词广告是用户今天访问的倒数第几次
@@ -378,7 +381,7 @@ def main():
         df['today_user_view_keyword_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['search_key']]).rank(ascending=0, method='dense')
         df['today_user_view_keyword_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['search_key']]).rank(ascending=1, method='dense')
         df['today_user_view_keyword_num'] = df['today_user_view_keyword_time'] + df['today_user_view_keyword_rev_time'] - 1
-        df['today_user_view_keyword_pct'] = df['today_user_view_keyword_time'] / df['today_user_view_keyword_num']
+        df['today_user_view_keyword_pct'] = df['today_user_view_keyword_time'] / (1 + df['today_user_view_keyword_num'])
         # ==========================================================================================
         df_list.append(df)
 
