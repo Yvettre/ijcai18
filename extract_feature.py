@@ -161,7 +161,7 @@ def main():
         df['item_trade_rate'].fillna(0, inplace=True)
 
         # # item_brand_trade_num
-        # item_feat_set.add('item_brand_trade_num')
+        item_feat_set.add('item_brand_trade_num')
         item_brand_trade_num = df_feat[['item_brand_id', 'is_trade']]
         item_brand_trade_num = item_brand_trade_num.groupby('item_brand_id').agg('sum').reset_index()
         item_brand_trade_num.rename(columns={'is_trade': 'item_brand_trade_num'}, inplace=True)
