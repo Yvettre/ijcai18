@@ -51,7 +51,7 @@ params = {
 }
 
 def train():
-    feature_name = list(train_df.columns[1:-1])
+    feature_name = list(train_df.drop(['instance_id', 'is_trade'], axis=1).columns)
     print feature_name
 
     print data_train.shape, label_train.shape
