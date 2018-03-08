@@ -50,6 +50,12 @@ def get_time(s):
     # else:
     #     return 2*h
 
+def get_second_cate(x):
+    try:
+        return x.split(':')[1]
+    except Exception, e:
+        return '-1'
+
 def main():
     train_table = pd.read_csv(
         'data/round1_ijcai_18_train_20180301.txt', sep=' ')
@@ -77,6 +83,35 @@ def main():
     le.fit(list(train_table['predict_major_cate']) + list(test_table['predict_major_cate']))
     train_table['predict_major_cate'] = le.transform(train_table['predict_major_cate'])
     test_table['predict_major_cate'] = le.transform(test_table['predict_major_cate'])
+    del le 
+    
+    # get item major cate
+    train_table['item_major_cate'] = train_table['item_category_list'].apply(
+        lambda x: x.split(':')[0])
+    test_table['item_major_cate'] = test_table['item_category_list'].apply(
+        lambda x: x.split(':')[0])
+    le = preprocessing.LabelEncoder()
+    le.fit(list(train_table['item_major_cate']) + list(test_table['item_major_cate']))
+    train_table['item_major_cate'] = le.transform(train_table['item_major_cate'])
+    test_table['item_major_cate'] = le.transform(test_table['item_major_cate'])
+    del le
+
+    # get item second cate
+    train_table['item_second_cate'] = train_table['item_category_list'].apply(get_second_cate)
+    test_table['item_second_cate'] = test_table['item_category_list'].apply(get_second_cate)
+    le = preprocessing.LabelEncoder()
+    le.fit(list(train_table['item_second_cate']) + list(test_table['item_second_cate']))
+    train_table['item_second_cate'] = le.transform(train_table['item_second_cate'])
+    test_table['item_second_cate'] = le.transform(test_table['item_second_cate'])
+    del le 
+
+    # get item city id
+    le = preprocessing.LabelEncoder()
+    train_table['item_city_id'].replace(np.NaN, 0, inplace=True)
+    test_table['item_city_id'].replace(np.NaN, 0, inplace=True)
+    le.fit(list(train_table['item_city_id']) + list(test_table['item_city_id']))
+    train_table['item_city_id'] = le.transform(train_table['item_city_id'])
+    test_table['item_city_id'] = le.transform(test_table['item_city_id'])
     del le
 
     # get search keyword
@@ -90,7 +125,7 @@ def main():
     instance_id = ['instance_id']
     item_feat_set = {
         'item_price_level', 'item_sales_level', 'item_collected_level',
-        'item_pv_level'
+        'item_pv_level', 'item_city_id', 'item_major_cate','item_second_cate'
     }
     user_feat_set = {
         'user_gender_id', 'user_age_level', 'user_occupation_id',
@@ -359,7 +394,7 @@ def main():
         df['today_user_view_brand_num'] = df['today_user_view_brand_time'] + df['today_user_view_brand_rev_time'] - 1
         df['today_user_view_brand_pct'] = df['today_user_view_brand_time'] / (1 + df['today_user_view_brand_num'])
         del tmp
-        # today_user_view_cat_rev_time        
+        # today_user_view_cate_rev_time        
         # 当前访问是今天用户访问该类别商品的倒数第几次
         leak_feat_set.add('today_user_view_cate_rev_time')
         leak_feat_set.add('today_user_view_cate_time')
@@ -370,6 +405,16 @@ def main():
         df['today_user_view_cate_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['predict_major_cate']]).rank(ascending=1, method='dense')
         df['today_user_view_cate_num'] = df['today_user_view_cate_time'] + df['today_user_view_cate_rev_time'] - 1
         df['today_user_view_cate_pct'] = df['today_user_view_cate_time'] / (1 + df['today_user_view_cate_num'])
+
+        leak_feat_set.add('today_user_view_item_cate_rev_time')
+        leak_feat_set.add('today_user_view_item_cate_time')
+        leak_feat_set.add('today_user_view_item_cate_num')
+        leak_feat_set.add('today_user_view_item_cate_pct')
+        tmp = df[['user_id', 'item_major_cate', 'context_timestamp']].copy()
+        df['today_user_view_item_cate_rev_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_major_cate']]).rank(ascending=0, method='dense')
+        df['today_user_view_item_cate_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['item_major_cate']]).rank(ascending=1, method='dense')
+        df['today_user_view_item_cate_num'] = df['today_user_view_item_cate_time'] + df['today_user_view_item_cate_rev_time'] - 1
+        df['today_user_view_item_cate_pct'] = df['today_user_view_item_cate_time'] / (1 + df['today_user_view_item_cate_num'])
         del tmp
         # today_user_view_keyword_rev_time
         # 当前访问的关键词广告是用户今天访问的倒数第几次

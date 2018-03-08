@@ -67,7 +67,7 @@ def train():
         valid_sets=lgb_eval,
         feature_name=feature_name,
         categorical_feature=[
-            'user_gender_id', 'user_occupation_id', 'predict_major_cate'
+            'user_gender_id', 'user_occupation_id', 'predict_major_cate', 'item_city_id', 'item_major_cate','item_second_cate'
         ],
         early_stopping_rounds=200)
 
