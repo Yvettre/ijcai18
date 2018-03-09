@@ -51,9 +51,10 @@ def get_time(s):
     #     return 2*h
 
 def get_second_cate(x):
-    try:
-        return x.split(':')[1]
-    except Exception, e:
+    cate_list = x.split(':')
+    if len(cate_list) > 1:
+        return cate_list[1]
+    else:
         return '-1'
 
 def main():
