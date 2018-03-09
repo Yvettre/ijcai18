@@ -30,8 +30,8 @@ data_val = val_df.drop(['instance_id', 'is_trade'], axis=1)
 id_test = test_df['instance_id']
 data_test = test_df.drop(['instance_id'], axis=1)
 
-p_xgb = 0.7
-p_lgb = 0.3
+p_xgb = 0.65
+p_lgb = 0.35
 
 model_xgb = joblib.load('model/xgb_model')
 model_lgb = joblib.load('model/gbm')
@@ -54,11 +54,24 @@ def val():
     loss_val_xgb = log_loss(label_val, y_val_xgb)
     print 'xgb_loss: train: %f val: %f' %(loss_train_xgb, loss_val_xgb)
 
-    y_train = p_xgb * y_train_xgb + p_lgb * y_train_lgb
-    y_val = p_xgb * y_val_xgb + p_lgb * y_val_lgb
-    loss_train_weighten = log_loss(label_train, y_train)
-    loss_val_weighten = log_loss(label_val, y_val)
-    print 'weighten_loss: train: %f val: %f' %(loss_train_weighten, loss_val_weighten)
+    min_val_loss = 1
+    best_p_xgb = 0
+    best_p_lgb = 1
+    for i in range(0, 21):
+        p_xgb = i / 20.0
+        p_lgb = 1 - p_xgb
+        y_train = p_xgb * y_train_xgb + p_lgb * y_train_lgb
+        y_val = p_xgb * y_val_xgb + p_lgb * y_val_lgb
+        loss_train_weighten = log_loss(label_train, y_train)
+        loss_val_weighten = log_loss(label_val, y_val)
+        print 'p_xgb: %f, p_lgb: %f, loss_train: %f, loss_val: %f'%(p_xgb, p_lgb, loss_train_weighten, loss_val_weighten)
+        if loss_val_weighten < min_val_loss:
+            min_val_loss = loss_val_weighten
+            min_train_loss = loss_train_weighten
+            best_p_lgb = p_lgb
+            best_p_xgb = p_xgb
+    print 'best p_xgb: %f best p_lgb: %f'%(best_p_xgb, best_p_lgb)
+    print 'weighten_loss: train: %f val: %f' %(min_train_loss, min_val_loss)
 
 def submit():
     y_test_lgb = model_lgb.predict(data_test.values, num_iteration=model_lgb.best_iteration)
