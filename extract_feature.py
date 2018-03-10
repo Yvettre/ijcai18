@@ -195,15 +195,15 @@ def main():
         item_feat_set.add('item_trade_rate')
         df['item_trade_rate'] = df['item_trade_num'] / (1 + df['item_view_num'])
         df['item_trade_rate'].fillna(0, inplace=True)
-
-        # # item_brand_trade_num
+        # ------------------------------------------------------------------------------------------        
+        # item_brand_trade_num
         item_feat_set.add('item_brand_trade_num')
         item_brand_trade_num = df_feat[['item_brand_id', 'is_trade']]
         item_brand_trade_num = item_brand_trade_num.groupby('item_brand_id').agg('sum').reset_index()
         item_brand_trade_num.rename(columns={'is_trade': 'item_brand_trade_num'}, inplace=True)
         df = pd.merge(df, item_brand_trade_num, on=['item_brand_id'], how='left')
         del item_brand_trade_num
-        # # item_brand_not_trade_num
+        # item_brand_not_trade_num
         item_feat_set.add('item_brand_not_trade_num')
         item_brand_not_trade_num = df_feat[['item_brand_id', 'is_trade']].copy()
         item_brand_not_trade_num['is_trade'] = 1 - item_brand_not_trade_num['is_trade']
@@ -218,6 +218,46 @@ def main():
         item_feat_set.add('item_brand_trade_rate')
         df['item_brand_trade_rate'] = df['item_brand_trade_num'] / (1 + df['item_brand_view_num'])
         df['item_brand_trade_rate'].fillna(0, inplace=True)
+        # ------------------------------------------------------------------------------------------
+        # item_cate_trade_num
+        item_feat_set.add('item_cate_trade_num')
+        item_cate_trade_num = df_feat[['item_second_cate', 'is_trade']]
+        item_cate_trade_num = item_cate_trade_num.groupby('item_second_cate').agg('sum').reset_index()
+        item_cate_trade_num.rename(columns={'is_trade': 'item_cate_trade_num'}, inplace=True)
+        df = pd.merge(df, item_cate_trade_num, on=['item_second_cate'], how='left')
+        del item_cate_trade_num
+        # item_cate_not_trade_num
+        item_feat_set.add('item_cate_not_trade_num')
+        item_cate_not_trade_num = df_feat[['item_second_cate', 'is_trade']].copy()
+        item_cate_not_trade_num['is_trade'] = 1 - item_cate_not_trade_num['is_trade']
+        item_cate_not_trade_num = item_cate_not_trade_num.groupby('item_second_cate').agg('sum').reset_index()
+        item_cate_not_trade_num.rename(columns={'is_trade': 'item_cate_not_trade_num'}, inplace=True)
+        df = pd.merge(df, item_cate_not_trade_num, on=['item_second_cate'], how='left')
+        del item_cate_not_trade_num
+        # item_cate_view_num
+        item_feat_set.add('item_cate_view_num')
+        df['item_cate_view_num'] = df['item_cate_trade_num'] + df['item_cate_not_trade_num']
+        # item_cate_trade_rate
+        item_feat_set.add('item_cate_trade_rate')
+        df['item_cate_trade_rate'] = df['item_cate_trade_num'] / (1 + df['item_cate_view_num'])
+        df['item_cate_trade_rate'].fillna(0, inplace=True)
+        # ------------------------------------------------------------------------------------------
+        # item_rank_in_cate
+        item_feat_set.add('item_rank_in_cate')
+        tmp = df[['item_id', 'item_second_cate', 'item_trade_num']].copy()
+        df['item_rank_in_cate'] = tmp['item_trade_num'].groupby([tmp['item_second_cate']]).rank(ascending=0, method='dense')
+        del tmp
+        # item_pct_in_cate
+        item_feat_set.add('item_pct_in_cate')
+        df['item_pct_in_cate'] = df['item_trade_num'] / (1 + df['item_cate_trade_num'])
+        # item_rank_in_brand
+        item_feat_set.add('item_rank_in_brand')
+        tmp = df[['item_id', 'item_brand_id', 'item_trade_num']].copy()
+        df['item_rank_in_brand'] = tmp['item_trade_num'].groupby([tmp['item_brand_id']]).rank(ascending=0, method='dense')
+        del tmp
+        # item_pct_in_brand
+        item_feat_set.add('item_pct_in_brand')
+        df['item_pct_in_brand'] = df['item_trade_num'] / (1 + df['item_brand_trade_num'])
         # ==========================================================================================
         ## shop_feature
         # shop_trade_num
@@ -242,6 +282,7 @@ def main():
         shop_feat_set.add('shop_trade_rate')
         df['shop_trade_rate'] = df['shop_trade_num'] / (1 + df['shop_view_num'])
         df['shop_trade_rate'].fillna(0, inplace=True)
+        # ------------------------------------------------------------------------------------------
         # shop_score_service_inc
         shop_feat_set.add('shop_score_service_inc')        
         shop_score_service_past = df_feat[['shop_id', 'shop_score_service']]
@@ -293,6 +334,7 @@ def main():
         user_feat_set.add('user_gender_trade_rate')
         df['user_gender_trade_rate'] = df['user_gender_trade_num'] / (1 + df['user_gender_view_num'])
         df['user_gender_trade_rate'].fillna(0, inplace=True)
+        # ------------------------------------------------------------------------------------------
         # user_occupation_trade_num
         user_feat_set.add('user_occupation_trade_num')
         user_occupation_trade_num = df_feat[['user_occupation_id', 'is_trade']]

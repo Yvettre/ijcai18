@@ -41,7 +41,7 @@ params = {
     'metric_freq': 1,
     'is_training_metric': False,
     'num_leaves': 64,
-    'feature_fraction': 0.5,
+    'feature_fraction': 0.45,
     'bagging_fraction': 0.7,
     'bagging_freq': 5,
     'verbose': -1,
