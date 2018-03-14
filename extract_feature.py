@@ -65,6 +65,9 @@ def main():
         'data/round1_ijcai_18_test_a_20180301.txt', sep=' ')
     test_table.replace(-1, np.NaN, inplace=True)
 
+    train_table.drop_duplicates(subset='instance_id', keep='first', inplace=True)
+    test_table.drop_duplicates(subset='instance_id', keep='first', inplace=True)
+
     # get time
     train_table['context_time'] = train_table['context_timestamp'].apply(get_time)
     test_table['context_time'] = test_table['context_timestamp'].apply(get_time)
