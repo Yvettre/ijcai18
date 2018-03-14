@@ -65,6 +65,9 @@ def main():
         'data/round1_ijcai_18_test_a_20180301.txt', sep=' ')
     test_table.replace(-1, np.NaN, inplace=True)
 
+    train_table.drop_duplicates(subset='instance_id', keep='first', inplace=True)
+    test_table.drop_duplicates(subset='instance_id', keep='first', inplace=True)
+
     # get time
     train_table['context_time'] = train_table['context_timestamp'].apply(get_time)
     test_table['context_time'] = test_table['context_timestamp'].apply(get_time)
@@ -258,6 +261,12 @@ def main():
         # item_pct_in_brand
         item_feat_set.add('item_pct_in_brand')
         df['item_pct_in_brand'] = df['item_trade_num'] / (1 + df['item_brand_trade_num'])
+        # ------------------------------------------------------------------------------------------
+        # item_pricerank_in_cate
+        item_feat_set.add('item_pricerank_in_cate')
+        tmp = df[['item_id','item_second_cate','item_price_level']].copy()
+        df['item_pricerank_in_cate'] = tmp['item_price_level'].groupby([tmp['item_second_cate']]).rank(ascending=0, method='dense')
+        del tmp
         # ==========================================================================================
         ## shop_feature
         # shop_trade_num
