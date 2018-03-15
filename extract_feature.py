@@ -57,6 +57,18 @@ def get_second_cate(x):
     else:
         return '-1'
 
+def get_caterank_in_predict(s):
+    item_second_cate = s['item_second_cate']
+    predict_category_property = s['predict_category_property'].split(';')
+
+    flag = np.NaN
+    for i,item in enumerate(predict_category_property):
+        cate = item.split(':')[0]
+        if cate==item_second_cate:
+            flag = i
+    return flag
+    
+
 def main():
     train_table = pd.read_csv(
         'data/round1_ijcai_18_train_20180301.txt', sep=' ')
@@ -103,6 +115,10 @@ def main():
     # get item second cate
     train_table['item_second_cate'] = train_table['item_category_list'].apply(get_second_cate)
     test_table['item_second_cate'] = test_table['item_category_list'].apply(get_second_cate)
+    # get item_caterank_in_predict
+    train_table['item_caterank_in_predict'] = train_table.apply(get_caterank_in_predict, axis=1)
+    test_table['item_caterank_in_predict'] = test_table.apply(get_caterank_in_predict, axis=1)
+    # LabelEncoder item_second_cate
     le = preprocessing.LabelEncoder()
     le.fit(list(train_table['item_second_cate']) + list(test_table['item_second_cate']))
     train_table['item_second_cate'] = le.transform(train_table['item_second_cate'])
@@ -129,7 +145,7 @@ def main():
     instance_id = ['instance_id']
     item_feat_set = {
         'item_price_level', 'item_sales_level', 'item_collected_level',
-        'item_pv_level', 'item_city_id', 'item_major_cate','item_second_cate'
+        'item_pv_level', 'item_city_id', 'item_major_cate','item_second_cate','item_caterank_in_predict'
     }
     user_feat_set = {
         'user_gender_id', 'user_age_level', 'user_occupation_id',
