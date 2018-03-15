@@ -1,4 +1,5 @@
 #coding=utf-8
+#pylint:disable=E1101
 import xgboost as xgb
 import lightgbm as lgb
 import pandas as pd
