@@ -23,6 +23,19 @@ def log_loss(y_list, p_list):
 train_df = pd.read_csv('data/train_feat.csv')
 val_df = pd.read_csv('data/val_feat.csv')
 test_df = pd.read_csv('data/test_feat.csv')
+
+train_df['context_page_id_1'] = (train_df['context_page_id'] <= 1)
+test_df['context_page_id_1'] = (test_df['context_page_id'] <= 1)
+val_df['context_page_id_1'] = (val_df['context_page_id'] <= 1)
+
+train_df['context_page_id_4'] = (train_df['context_page_id'] <= 4)
+test_df['context_page_id_4'] = (test_df['context_page_id'] <= 4)
+val_df['context_page_id_4'] = (val_df['context_page_id'] <= 4)
+
+train_df['context_page_id_8'] = (train_df['context_page_id'] <= 8)
+test_df['context_page_id_8'] = (test_df['context_page_id'] <= 8)
+val_df['context_page_id_8'] = (val_df['context_page_id'] <= 8)
+
 label_train = train_df['is_trade'].values
 data_train = train_df.drop(['instance_id', 'is_trade'], axis=1)
 label_val = val_df['is_trade'].values
