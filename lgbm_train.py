@@ -24,6 +24,22 @@ def log_loss(y_list, p_list):
 train_df = pd.read_csv('data/train_feat.csv')
 val_df = pd.read_csv('data/val_feat.csv')
 test_df = pd.read_csv('data/test_feat.csv')
+drop_list = ['prop_match_num','prop_match_rate']
+# train_df[drop_list] = 0
+# test_df[drop_list] = 0
+# val_df[drop_list] = 0
+train_df['context_page_id_1'] = (train_df['context_page_id'] <= 1)
+test_df['context_page_id_1'] = (test_df['context_page_id'] <= 1)
+val_df['context_page_id_1'] = (val_df['context_page_id'] <= 1)
+
+train_df['context_page_id_4'] = (train_df['context_page_id'] <= 4)
+test_df['context_page_id_4'] = (test_df['context_page_id'] <= 4)
+val_df['context_page_id_4'] = (val_df['context_page_id'] <= 4)
+
+train_df['context_page_id_8'] = (train_df['context_page_id'] <= 8)
+test_df['context_page_id_8'] = (test_df['context_page_id'] <= 8)
+val_df['context_page_id_8'] = (val_df['context_page_id'] <= 8)
+
 label_train = train_df['is_trade'].values
 data_train = train_df.drop(['instance_id', 'is_trade'], axis=1).values
 label_val = val_df['is_trade'].values
@@ -42,6 +58,7 @@ params = {
     'is_training_metric': False,
     'num_leaves': 64,
     'feature_fraction': 0.35,
+    'feature_fraction_seed': 4,   
     'bagging_fraction': 0.7,
     'bagging_freq': 5,
     'verbose': -1,
