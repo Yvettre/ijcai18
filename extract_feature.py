@@ -41,7 +41,44 @@ def get_match_level(s):
 
     return max_match_level
 
+# 属性匹配比(考虑类别) = 商品属性列表与预测属性列表(考虑类别)匹配的属性个数 / 预测属性列表(考虑类别)属性个数
+def get_prop_match_rate(s):
+    item_category_list = s['item_category_list'].split(';')
+    item_property_list = s['item_property_list'].split(';')
+    predict_category_property = s['predict_category_property'].split(';')
+    predict_prop_list = []
 
+    try:
+        for item in predict_category_property:
+            cate = item.split(':')[0]
+            if cate in item_category_list:
+                prop_list = item.split(':')[1].split(',')
+                predict_prop_list.extend(prop_list)
+        match_prop_set = set(predict_prop_list) & set(item_property_list) # 取交集
+        match_rate = len(match_prop_set) / float(len(predict_prop_list))
+    except Exception,e:
+        return np.NaN
+
+    return match_rate
+
+# 商品属性列表与预测属性列表(考虑类别)匹配的属性个数
+def get_prop_match_num(s):
+    item_category_list = s['item_category_list'].split(';')
+    item_property_list = s['item_property_list'].split(';')
+    predict_category_property = s['predict_category_property'].split(';')
+    predict_prop_list = []
+
+    try:
+        for item in predict_category_property:
+            cate = item.split(':')[0]
+            if cate in item_category_list:
+                prop_list = item.split(':')[1].split(',')
+                predict_prop_list.extend(prop_list)
+        match_prop_set = set(predict_prop_list) & set(item_property_list) # 取交集
+    except Exception,e:
+        return np.NaN
+    return len(match_prop_set)
+    
 # 实验证明好像还是一小时的结果好一些
 def get_time(s):
     h = datetime.datetime.fromtimestamp(s).hour
@@ -143,11 +180,20 @@ def main():
     test_table['search_key'] = le.transform(test_table['predict_category_property'])
     del le
 
+    # get property_match_rate
+    train_table['prop_match_rate'] = train_table.apply(get_prop_match_rate, axis=1)
+    test_table['prop_match_rate'] = test_table.apply(get_prop_match_rate, axis=1)
+    # get property_match_num
+    train_table['prop_match_num'] = train_table.apply(get_prop_match_num, axis=1)
+    test_table['prop_match_num'] = test_table.apply(get_prop_match_num, axis=1)
+
     # basic feat
     instance_id = ['instance_id']
     item_feat_set = {
         'item_price_level', 'item_sales_level', 'item_collected_level',
-        'item_pv_level', 'item_city_id', 'item_major_cate','item_second_cate','item_caterank_in_predict'
+        'item_pv_level', 'item_city_id', 'item_major_cate','item_second_cate',
+        'item_caterank_in_predict',
+        'prop_match_rate','prop_match_num'
     }
     user_feat_set = {
         'user_gender_id', 'user_age_level', 'user_occupation_id',
