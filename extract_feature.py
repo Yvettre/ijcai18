@@ -1,4 +1,6 @@
 # coding=utf-8
+# pylint:disable=E1101
+
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing

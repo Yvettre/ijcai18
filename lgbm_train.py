@@ -1,5 +1,5 @@
 # coding=utf-8
-
+# pylint:disable=E1101
 import lightgbm as lgb
 import pandas as pd
 import numpy as np
