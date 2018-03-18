@@ -1,40 +1,52 @@
 #coding=utf-8
+# pylint:disable=E1101
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import log_loss
+
+'''minmax'''
+def scale(data, low=0, high=1):
+    min_bycols = np.min(data, axis=0)
+    max_bycols = np.max(data, axis=0)
+
+    data -= np.tile(min_bycols, (len(data),1))
+    data /= np.tile(max_bycols - min_bycols + 1e-15, (len(data),1))
+    data *= (high-low)*np.ones(data.shape)
+
+    return data
+
+'''zscore'''
+def scale_zscore(data, minus_mean_flag=True):
+    mu_bycols = np.average(data, axis=0)
+    std_bycols = np.std(data, axis=0)
+
+    if minus_mean_flag:
+        data -= np.tile(mu_bycols, (len(data), 1))
+    data /= np.tile(std_bycols + 1e-15, (len(data), 1))
+
+    return data
 
 train_df = pd.read_csv('data/train_feat.csv')
 val_df = pd.read_csv('data/val_feat.csv')
 test_df = pd.read_csv('data/test_feat.csv')
+label_train = train_df['is_trade'].values
+label_val = val_df['is_trade'].values
 train_df.fillna(0,inplace=True)
 val_df.fillna(0,inplace=True)
-label_train = train_df['is_trade'].values
+train_df = train_df.apply(lambda x: (x - np.mean(x)) / np.std(x))
+val_df = val_df.apply(lambda x: (x - np.mean(x)) / np.std(x))
 data_train = train_df.drop(['instance_id', 'is_trade'], axis=1).values
-label_val = val_df['is_trade'].values
 data_val = val_df.drop(['instance_id', 'is_trade'], axis=1).values
 id_test = test_df['instance_id']
 data_test = test_df.drop(['instance_id'], axis=1).values
 
-def log_loss(y_list, p_list):
-    e = 1e-15
-    assert len(y_list) == len(p_list), 'length not match {} vs. {}'.format(
-        len(y_list), len(p_list))
-    p_list = [x if x > e else e for x in p_list]
-    p_list = [x if x < 1-e else 1-e for x in p_list]
-    n = len(y_list)
-    ans = 0
-    for i in xrange(n):
-        yi = y_list[i]
-        pi = p_list[i]
-        ans += yi * np.log(pi) + (1 - yi) * np.log(1 - pi)
-    ans = -ans / n
-    return ans
 
 def main():
     model = LogisticRegression()
     model.fit(data_train, label_train)
-    y_val = model.predict(data_val)
-    y_train = model.predict(data_train)
+    y_val = model.predict_proba(data_val)
+    y_train = model.predict_proba(data_train)
     print log_loss(label_train, y_train)
     print log_loss(label_val, y_val)
 
