@@ -1,4 +1,5 @@
 # coding=utf-8
+# pylint:disable=E1101
 import xgboost as xgb
 import pandas as pd
 import numpy as np
@@ -96,8 +97,8 @@ def submit():
     time_format = '%Y-%m-%d-%H-%M-%S'
     time_now = datetime.datetime.now()
     bak_file = 'result/result_%s.csv'%time_now.strftime(time_format)
-    result.to_csv(bak_file, index=False) # for backup
-    result.to_csv('result/result.csv', index=False)
+    result.to_csv(bak_file, index=False, sep=' ') # for backup
+    result.to_csv('result/result.csv', index=False, sep=' ')
     print bak_file
     print y.mean()
 
