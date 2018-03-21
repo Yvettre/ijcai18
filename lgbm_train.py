@@ -60,7 +60,7 @@ params = {
     'is_training_metric': False,
     'num_leaves': 64,
     'feature_fraction': 0.35,
-    'feature_fraction_seed': 4,   
+    'feature_fraction_seed': 6,   
     'bagging_fraction': 0.7,
     'bagging_freq': 5,
     'verbose': -1,
