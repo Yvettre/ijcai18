@@ -60,7 +60,7 @@ params = {
     'is_training_metric': False,
     'num_leaves': 64,
     'feature_fraction': 0.35,
-    'feature_fraction_seed': 4,   
+    'feature_fraction_seed': 6,   
     'bagging_fraction': 0.7,
     'bagging_freq': 5,
     'verbose': -1,
@@ -120,8 +120,8 @@ def submit():
     time_format = '%Y-%m-%d-%H-%M-%S'
     time_now = datetime.datetime.now()
     bak_file = 'result/result_%s.csv'%time_now.strftime(time_format)
-    result.to_csv(bak_file, index=False) # for backup
-    result.to_csv('result/result.csv', index=False)
+    result.to_csv(bak_file, index=False, sep=' ', mode='wb') # for backup
+    result.to_csv('result/result.csv', index=False, sep=' ', mode='wb')
     print bak_file
     print y.mean()
 

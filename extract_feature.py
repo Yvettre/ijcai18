@@ -432,7 +432,29 @@ def main():
         df['user_occupation_trade_rate'].fillna(0, inplace=True)
         # ==========================================================================================
         ## context_feature
-
+        # time_trade_num
+        cont_feat_set.add('time_trade_num')
+        time_trade_num = df_feat[['context_time', 'is_trade']]
+        time_trade_num = time_trade_num.groupby('context_time').agg('sum').reset_index()
+        time_trade_num.rename(columns={'is_trade': 'time_trade_num'}, inplace=True)        
+        df = pd.merge(df, time_trade_num, on=['context_time'], how='left')
+        del time_trade_num
+        # time_not_trade_num
+        cont_feat_set.add('time_not_trade_num')
+        time_not_trade_num = df_feat[['context_time', 'is_trade']].copy()
+        time_not_trade_num['is_trade'] = 1 - time_not_trade_num['is_trade']
+        time_not_trade_num = time_not_trade_num.groupby('context_time').agg('sum').reset_index()
+        time_not_trade_num.rename(columns={'is_trade': 'time_not_trade_num'}, inplace=True)
+        df = pd.merge(df, time_not_trade_num, on=['context_time'], how='left')
+        del time_not_trade_num
+        # time_view_num
+        cont_feat_set.add('time_view_num')
+        df['time_view_num'] = df['time_trade_num'] + df['time_not_trade_num']
+        # time_trade_rate
+        cont_feat_set.add('time_trade_rate')
+        df['time_trade_rate'] = df['time_trade_num'] / (1 + df['time_view_num'])
+        df['time_trade_rate'].fillna(0, inplace=True)
+        # ------------------------------------------------------------------------------------------
         # ==========================================================================================
         # ## cross_featre
         # brand_gender_trade_num

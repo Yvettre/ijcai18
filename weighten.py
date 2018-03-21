@@ -44,8 +44,8 @@ data_val = val_df.drop(['instance_id', 'is_trade'], axis=1)
 id_test = test_df['instance_id']
 data_test = test_df.drop(['instance_id'], axis=1)
 
-p_xgb = 0.3
-p_lgb = 0.7
+p_xgb = 0.25
+p_lgb = 0.75
 
 model_xgb = joblib.load('model/xgb_model')
 model_lgb = joblib.load('model/gbm')
@@ -99,8 +99,8 @@ def submit():
     time_format = '%Y-%m-%d-%H-%M-%S'
     time_now = datetime.datetime.now()
     bak_file = 'result/result_%s.csv'%time_now.strftime(time_format)
-    result.to_csv(bak_file, index=False) # for backup
-    result.to_csv('result/result.csv', index=False)
+    result.to_csv(bak_file, index=False, sep=' ', mode='wb') # for backup
+    result.to_csv('result/result.csv', index=False, sep=' ', mode='wb')
     print bak_file
     print y.mean()
 
