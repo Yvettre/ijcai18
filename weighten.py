@@ -44,8 +44,8 @@ data_val = val_df.drop(['instance_id', 'is_trade'], axis=1)
 id_test = test_df['instance_id']
 data_test = test_df.drop(['instance_id'], axis=1)
 
-p_xgb = 0.25
-p_lgb = 0.75
+p_xgb = 0.55
+p_lgb = 0.45
 
 model_xgb = joblib.load('model/xgb_model')
 model_lgb = joblib.load('model/gbm')

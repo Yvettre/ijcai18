@@ -21,6 +21,7 @@ import datetime
 # test_data : 
 #   dataset6: 2018-09-25 , features from 2018-09-23~2018-09-24
 
+hour_offset = 4
 
 def get_match_level(s):
     item_category_list = s['item_category_list'].split(';')
@@ -237,7 +238,8 @@ def main():
             df = train_table[train_table['context_day'] == day].copy()
         else:
             df = test_table.copy()
-        df_feat = train_table[(train_table['context_day'] == day-1) | (train_table['context_day'] == day-2)]
+        df_feat = train_table[(train_table['context_day'] == day-1) | ((train_table['context_day']==day-2)&(train_table['context_time']>=hour_offset))]
+        # df_feat = train_table[(train_table['context_day'] == day-1) | (train_table['context_day'] == day-2)]
         # ==========================================================================================
         ## item_feature
         # item_trade_num
