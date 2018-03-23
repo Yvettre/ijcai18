@@ -125,10 +125,22 @@ def submit():
     print bak_file
     print y.mean()
 
+def debug():
+    gbm = joblib.load('model/gbm')
+    id_val = val_df['instance_id']
+    y = gbm.predict(data_val, num_iteration=gbm.best_iteration)
+    assert len(y) == len(label_val), 'length not match: {} vs. {}'.format(len(y), len(label_val))
+    result = pd.DataFrame({'instance_id':id_val,'is_trade':label_val,'predicted_score':y})
+    result['diff'] = np.abs(result['is_trade'] - result['predicted_score'])
+    result.sort_values(by='diff', ascending=False, inplace=True)
+    result.to_csv('debug/result_debug.csv', index=False)
+
 
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == 'submit':
         submit()
+    if len(sys.argv) == 2 and sys.argv[1] == 'debug':
+        debug()
     else:
         train()
 
