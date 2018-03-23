@@ -21,6 +21,7 @@ import datetime
 # test_data : 
 #   dataset6: 2018-09-25 , features from 2018-09-23~2018-09-24
 
+hour_offset = 4
 
 def get_match_level(s):
     item_category_list = s['item_category_list'].split(';')
@@ -237,7 +238,8 @@ def main():
             df = train_table[train_table['context_day'] == day].copy()
         else:
             df = test_table.copy()
-        df_feat = train_table[(train_table['context_day'] == day-1) | (train_table['context_day'] == day-2)]
+        df_feat = train_table[(train_table['context_day'] == day-1) | ((train_table['context_day']==day-2)&(train_table['context_time']>=hour_offset))]
+        # df_feat = train_table[(train_table['context_day'] == day-1) | (train_table['context_day'] == day-2)]
         # ==========================================================================================
         ## item_feature
         # item_trade_num
@@ -331,6 +333,19 @@ def main():
         tmp = df[['item_id','item_second_cate','item_price_level']].copy()
         df['item_pricerank_in_cate'] = tmp['item_price_level'].groupby([tmp['item_second_cate']]).rank(ascending=0, method='dense')
         del tmp
+        # brand_price_level
+        item_feat_set.add('brand_price_level')
+        brand_price_level = df_feat[['item_brand_id', 'item_price_level']]
+        brand_price_level = brand_price_level.groupby('item_brand_id').agg('mean').reset_index()
+        brand_price_level.rename(columns={'item_price_level':'brand_price_level'}, inplace=True)
+        df = pd.merge(df, brand_price_level, on=['item_brand_id'], how='left')
+        del brand_price_level
+        # cate_price_level
+        item_feat_set.add('cate_price_level')
+        cate_price_level = df_feat[['item_second_cate', 'item_price_level']]
+        cate_price_level = cate_price_level.groupby('item_second_cate').agg('mean').reset_index()
+        cate_price_level.rename(columns={'item_price_level':'cate_price_level'}, inplace=True)
+        df = pd.merge(df, cate_price_level, on=['item_second_cate'], how='left')
         # ==========================================================================================
         ## shop_feature
         # shop_trade_num
@@ -383,6 +398,13 @@ def main():
         df['shop_score_description_inc'] = 100.0 * (df['shop_score_description'] - df['shop_score_description_past']) / df['shop_score_description_past']
         df['shop_score_description_inc'].fillna(0, inplace=True)
         del shop_score_description_past
+        # ------------------------------------------------------------------------------------------
+        shop_feat_set.add('shop_price_level')
+        shop_price_level = df[['shop_id','item_price_level']]
+        shop_price_level = shop_price_level.groupby('shop_id').agg('mean').reset_index()
+        shop_price_level.rename(columns={'item_price_level':'shop_price_level'}, inplace=True)
+        df = pd.merge(df, shop_price_level, on=['shop_id'], how='left')
+        del shop_price_level
         # ==========================================================================================
         ## user_feature
         # user_gender_trade_num
@@ -478,7 +500,7 @@ def main():
         # brand_age_rate
         cross_feat_set.add('brand_age_rate')
         df['brand_age_rate'] = df['brand_age_trade_num'] / (1 + df['item_brand_trade_num'])
-        df['brand_age_rate'].fillna(0, inplace=True) 
+        df['brand_age_rate'].fillna(0, inplace=True)
         # ==========================================================================================
         ## leakage feature
         # today_shop_view_num
@@ -565,6 +587,12 @@ def main():
         df['today_user_view_keyword_time'] = tmp['context_timestamp'].groupby([tmp['user_id'], tmp['search_key']]).rank(ascending=1, method='dense')
         df['today_user_view_keyword_num'] = df['today_user_view_keyword_time'] + df['today_user_view_keyword_rev_time'] - 1
         df['today_user_view_keyword_pct'] = df['today_user_view_keyword_time'] / (1 + df['today_user_view_keyword_num'])
+        # ------------------------------------------------------------------------------------------
+        leak_feat_set.add('today_user_query_hour')
+        tmp = df[['user_id','context_time']].copy()
+        tmp = tmp.groupby(['user_id', 'context_time']).size().reset_index().rename(columns={0:'today_user_query_hour'})
+        df = pd.merge(df, tmp, on=['user_id', 'context_time'], how='left')
+        del tmp
         # ==========================================================================================
         df_list.append(df)
 

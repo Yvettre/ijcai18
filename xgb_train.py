@@ -59,7 +59,7 @@ params = {'booster': 'gbtree',
             'eta': 0.02,
             'tree_method': 'exact',
             'seed': 0,
-            'nthread': 15
+            'nthread': -1
 }
 
 

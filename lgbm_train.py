@@ -37,7 +37,7 @@ train_df['context_page_id_8'] = (train_df['context_page_id'] <= 8)
 test_df['context_page_id_8'] = (test_df['context_page_id'] <= 8)
 val_df['context_page_id_8'] = (val_df['context_page_id'] <= 8)
 
-# drop_list = ['context_page_id']
+# drop_list = ['time_trade_num','time_not_trade_num','time_view_num','time_trade_rate']
 # train_df[drop_list] = 0
 # test_df[drop_list] = 0
 # val_df[drop_list] = 0

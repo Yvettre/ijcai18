@@ -5,28 +5,6 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 
-'''minmax'''
-def scale(data, low=0, high=1):
-    min_bycols = np.min(data, axis=0)
-    max_bycols = np.max(data, axis=0)
-
-    data -= np.tile(min_bycols, (len(data),1))
-    data /= np.tile(max_bycols - min_bycols + 1e-15, (len(data),1))
-    data *= (high-low)*np.ones(data.shape)
-
-    return data
-
-'''zscore'''
-def scale_zscore(data, minus_mean_flag=True):
-    mu_bycols = np.average(data, axis=0)
-    std_bycols = np.std(data, axis=0)
-
-    if minus_mean_flag:
-        data -= np.tile(mu_bycols, (len(data), 1))
-    data /= np.tile(std_bycols + 1e-15, (len(data), 1))
-
-    return data
-
 train_df = pd.read_csv('data/train_feat.csv')
 val_df = pd.read_csv('data/val_feat.csv')
 test_df = pd.read_csv('data/test_feat.csv')
