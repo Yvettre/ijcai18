@@ -333,19 +333,82 @@ def main():
         tmp = df[['item_id','item_second_cate','item_price_level']].copy()
         df['item_pricerank_in_cate'] = tmp['item_price_level'].groupby([tmp['item_second_cate']]).rank(ascending=0, method='dense')
         del tmp
-        # brand_price_level
-        item_feat_set.add('brand_price_level')
-        brand_price_level = df_feat[['item_brand_id', 'item_price_level']]
-        brand_price_level = brand_price_level.groupby('item_brand_id').agg('mean').reset_index()
-        brand_price_level.rename(columns={'item_price_level':'brand_price_level'}, inplace=True)
-        df = pd.merge(df, brand_price_level, on=['item_brand_id'], how='left')
-        del brand_price_level
-        # cate_price_level
-        item_feat_set.add('cate_price_level')
-        cate_price_level = df_feat[['item_second_cate', 'item_price_level']]
-        cate_price_level = cate_price_level.groupby('item_second_cate').agg('mean').reset_index()
-        cate_price_level.rename(columns={'item_price_level':'cate_price_level'}, inplace=True)
-        df = pd.merge(df, cate_price_level, on=['item_second_cate'], how='left')
+        # brand_price_level_avg
+        item_feat_set.add('brand_price_level_avg')
+        tmp = df_feat[['item_brand_id', 'item_price_level']].groupby('item_brand_id')
+        brand_price_level_avg = tmp.mean().reset_index()
+        brand_price_level_avg.rename(columns={'item_price_level':'brand_price_level_avg'}, inplace=True)
+        df = pd.merge(df, brand_price_level_avg, on=['item_brand_id'], how='left')
+        del brand_price_level_avg
+        # brand_price_level_min
+        item_feat_set.add('brand_price_level_min')
+        brand_price_level_min = tmp.min().reset_index()
+        brand_price_level_min.rename(columns={'item_price_level':'brand_price_level_min'}, inplace=True)
+        df = pd.merge(df, brand_price_level_min, on=['item_brand_id'], how='left')
+        del brand_price_level_min
+        # brand_price_level_max
+        item_feat_set.add('brand_price_level_max')
+        brand_price_level_max = tmp.max().reset_index()
+        brand_price_level_max.rename(columns={'item_price_level':'brand_price_level_max'}, inplace=True)
+        df = pd.merge(df, brand_price_level_max, on=['item_brand_id'], how='left')
+        del brand_price_level_max
+        # brand_price_level_std
+        item_feat_set.add('brand_price_level_std')
+        brand_price_level_std = tmp.std().reset_index()
+        brand_price_level_std.rename(columns={'item_price_level':'brand_price_level_std'}, inplace=True)
+        df = pd.merge(df, brand_price_level_std, on=['item_brand_id'], how='left')
+        del brand_price_level_std
+        # brand_price_level_median
+        item_feat_set.add('brand_price_level_median')
+        brand_price_level_median = tmp.median().reset_index()
+        brand_price_level_median.rename(columns={'item_price_level':'brand_price_level_median'}, inplace=True)
+        df = pd.merge(df, brand_price_level_median, on=['item_brand_id'], how='left')
+        del brand_price_level_median
+        # # brand_price_level_mode 写法有问题
+        # item_feat_set.add('brand_price_level_mode')
+        # brand_price_level_mode = tmp.mode().reset_index()
+        # brand_price_level_mode.rename(columns={'item_price_level':'brand_price_level_mode'}, inplace=True)
+        # df = pd.merge(df, brand_price_level_mode, on=['item_brand_id'], how='left')
+        # del brand_price_level_mode
+        del tmp
+        # cate_price_level_avg
+        item_feat_set.add('cate_price_level_avg')
+        tmp = df_feat[['item_second_cate', 'item_price_level']].groupby('item_second_cate')
+        cate_price_level_avg = tmp.mean().reset_index()
+        cate_price_level_avg.rename(columns={'item_price_level':'cate_price_level_avg'}, inplace=True)
+        df = pd.merge(df, cate_price_level_avg, on=['item_second_cate'], how='left')
+        del cate_price_level_avg
+        # cate_price_level_min
+        item_feat_set.add('cate_price_level_min')
+        cate_price_level_min = tmp.min().reset_index()
+        cate_price_level_min.rename(columns={'item_price_level':'cate_price_level_min'}, inplace=True)
+        df = pd.merge(df, cate_price_level_min, on=['item_second_cate'], how='left')
+        del cate_price_level_min
+        # cate_price_level_max
+        item_feat_set.add('cate_price_level_max')
+        cate_price_level_max = tmp.max().reset_index()
+        cate_price_level_max.rename(columns={'item_price_level':'cate_price_level_max'}, inplace=True)
+        df = pd.merge(df, cate_price_level_max, on=['item_second_cate'], how='left')
+        del cate_price_level_max
+        # cate_price_level_std
+        item_feat_set.add('cate_price_level_std')
+        cate_price_level_std = tmp.std().reset_index()
+        cate_price_level_std.rename(columns={'item_price_level':'cate_price_level_std'}, inplace=True)
+        df = pd.merge(df, cate_price_level_std, on=['item_second_cate'], how='left')
+        del cate_price_level_std
+        # cate_price_level_median
+        item_feat_set.add('cate_price_level_median')
+        cate_price_level_median = tmp.median().reset_index()
+        cate_price_level_median.rename(columns={'item_price_level':'cate_price_level_median'}, inplace=True)
+        df = pd.merge(df, cate_price_level_median, on=['item_second_cate'], how='left')
+        del cate_price_level_median
+        # # cate_price_level_mode
+        # item_feat_set.add('cate_price_level_mode')
+        # cate_price_level_mode = tmp.mode().reset_index()
+        # cate_price_level_mode.rename(columns={'item_price_level':'cate_price_level_mode'}, inplace=True)
+        # df = pd.merge(df, cate_price_level_mode, on=['item_second_cate'], how='left')
+        # del cate_price_level_mode
+        del tmp
         # ==========================================================================================
         ## shop_feature
         # shop_trade_num
@@ -399,12 +462,12 @@ def main():
         df['shop_score_description_inc'].fillna(0, inplace=True)
         del shop_score_description_past
         # ------------------------------------------------------------------------------------------
-        shop_feat_set.add('shop_price_level')
-        shop_price_level = df[['shop_id','item_price_level']]
-        shop_price_level = shop_price_level.groupby('shop_id').agg('mean').reset_index()
-        shop_price_level.rename(columns={'item_price_level':'shop_price_level'}, inplace=True)
-        df = pd.merge(df, shop_price_level, on=['shop_id'], how='left')
-        del shop_price_level
+        shop_feat_set.add('shop_price_level_avg')
+        shop_price_level_avg = df[['shop_id','item_price_level']]
+        shop_price_level_avg = shop_price_level_avg.groupby('shop_id').agg('mean').reset_index()
+        shop_price_level_avg.rename(columns={'item_price_level':'shop_price_level_avg'}, inplace=True)
+        df = pd.merge(df, shop_price_level_avg, on=['shop_id'], how='left')
+        del shop_price_level_avg
         # ==========================================================================================
         ## user_feature
         # user_gender_trade_num
@@ -501,6 +564,27 @@ def main():
         cross_feat_set.add('brand_age_rate')
         df['brand_age_rate'] = df['brand_age_trade_num'] / (1 + df['item_brand_trade_num'])
         df['brand_age_rate'].fillna(0, inplace=True)
+        # user_view_item_num
+        cross_feat_set.add('user_view_item_num')
+        tmp = df_feat[['user_id', 'item_id']]
+        tmp = tmp.groupby(['user_id','item_id']).size().reset_index()
+        tmp.rename(columns={0:'user_view_item_num'}, inplace=True)
+        df = pd.merge(df, tmp, on=['user_id', 'item_id'], how='left')
+        del tmp
+        # user_view_cate_num
+        cross_feat_set.add('user_view_cate_num')
+        tmp = df_feat[['user_id', 'item_second_cate']]
+        tmp = tmp.groupby(['user_id','item_second_cate']).size().reset_index()
+        tmp.rename(columns={0:'user_view_cate_num'}, inplace=True)        
+        df = pd.merge(df, tmp, on=['user_id', 'item_second_cate'], how='left')
+        del tmp
+        # user_view_brand_num
+        cross_feat_set.add('user_view_brand_num')
+        tmp = df_feat[['user_id', 'item_brand_id']]
+        tmp = tmp.groupby(['user_id','item_brand_id']).size().reset_index()
+        tmp.rename(columns={0:'user_view_brand_num'}, inplace=True)        
+        df = pd.merge(df, tmp, on=['user_id', 'item_brand_id'], how='left')
+        del tmp  
         # ==========================================================================================
         ## leakage feature
         # today_shop_view_num
