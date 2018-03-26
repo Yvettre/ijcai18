@@ -371,6 +371,7 @@ def main():
         # df = pd.merge(df, brand_price_level_mode, on=['item_brand_id'], how='left')
         # del brand_price_level_mode
         del tmp
+        # ------------------------------------------------------------------------------------------
         # cate_price_level_avg
         item_feat_set.add('cate_price_level_avg')
         tmp = df_feat[['item_second_cate', 'item_price_level']].groupby('item_second_cate')
@@ -515,6 +516,68 @@ def main():
         user_feat_set.add('user_occupation_trade_rate')
         df['user_occupation_trade_rate'] = df['user_occupation_trade_num'] / (1 + df['user_occupation_view_num'])
         df['user_occupation_trade_rate'].fillna(0, inplace=True)
+        # ------------------------------------------------------------------------------------------   
+        # user_age_trade_num
+        user_feat_set.add('user_age_trade_num')
+        user_age_trade_num = df_feat[['user_age_level', 'is_trade']]
+        user_age_trade_num = user_age_trade_num.groupby('user_age_level').agg('sum').reset_index()
+        user_age_trade_num.rename(columns={'is_trade': 'user_age_trade_num'}, inplace=True)        
+        df = pd.merge(df, user_age_trade_num, on=['user_age_level'], how='left')
+        del user_age_trade_num
+        # user_age_not_trade_num
+        user_feat_set.add('user_age_not_trade_num')
+        user_age_not_trade_num = df_feat[['user_age_level', 'is_trade']].copy()
+        user_age_not_trade_num['is_trade'] = 1 - user_age_not_trade_num['is_trade']        
+        user_age_not_trade_num = user_age_not_trade_num.groupby('user_age_level').agg('sum').reset_index()
+        user_age_not_trade_num.rename(columns={'is_trade': 'user_age_not_trade_num'}, inplace=True)        
+        df = pd.merge(df, user_age_not_trade_num, on=['user_age_level'], how='left')
+        del user_age_not_trade_num
+        # user_age_view_num
+        user_feat_set.add('user_age_view_num')
+        df['user_age_view_num'] = df['user_age_trade_num'] + df['user_age_not_trade_num']
+        # user_age_trade_rate
+        user_feat_set.add('user_age_trade_rate')
+        df['user_age_trade_rate'] = df['user_age_trade_num'] / (1 + df['user_age_view_num'])
+        df['user_age_trade_rate'].fillna(0, inplace=True)
+        # ------------------------------------------------------------------------------------------     
+        # user_view_price_level_avg
+        item_feat_set.add('user_view_price_level_avg')
+        tmp = df_feat[['user_id', 'item_price_level']].groupby('user_id')
+        user_view_price_level_avg = tmp.mean().reset_index()
+        user_view_price_level_avg.rename(columns={'item_price_level':'user_view_price_level_avg'}, inplace=True)
+        df = pd.merge(df, user_view_price_level_avg, on=['user_id'], how='left')
+        del user_view_price_level_avg
+        # user_view_price_level_min
+        item_feat_set.add('user_view_price_level_min')
+        user_view_price_level_min = tmp.min().reset_index()
+        user_view_price_level_min.rename(columns={'item_price_level':'user_view_price_level_min'}, inplace=True)
+        df = pd.merge(df, user_view_price_level_min, on=['user_id'], how='left')
+        del user_view_price_level_min
+        # user_view_price_level_max
+        item_feat_set.add('user_view_price_level_max')
+        user_view_price_level_max = tmp.max().reset_index()
+        user_view_price_level_max.rename(columns={'item_price_level':'user_view_price_level_max'}, inplace=True)
+        df = pd.merge(df, user_view_price_level_max, on=['user_id'], how='left')
+        del user_view_price_level_max
+        # user_view_price_level_std
+        item_feat_set.add('user_view_price_level_std')
+        user_view_price_level_std = tmp.std().reset_index()
+        user_view_price_level_std.rename(columns={'item_price_level':'user_view_price_level_std'}, inplace=True)
+        df = pd.merge(df, user_view_price_level_std, on=['user_id'], how='left')
+        del user_view_price_level_std
+        # user_view_price_level_median
+        item_feat_set.add('user_view_price_level_median')
+        user_view_price_level_median = tmp.median().reset_index()
+        user_view_price_level_median.rename(columns={'item_price_level':'user_view_price_level_median'}, inplace=True)
+        df = pd.merge(df, user_view_price_level_median, on=['user_id'], how='left')
+        del user_view_price_level_median
+        # # user_view_price_level_mode
+        # item_feat_set.add('user_view_price_level_mode')
+        # user_view_price_level_mode = tmp.mode().reset_index()
+        # user_view_price_level_mode.rename(columns={'item_price_level':'user_view_price_level_mode'}, inplace=True)
+        # df = pd.merge(df, user_view_price_level_mode, on=['user_id'], how='left')
+        # del user_view_price_level_mode
+        del tmp
         # ==========================================================================================
         ## context_feature
         # time_trade_num
