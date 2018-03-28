@@ -364,12 +364,12 @@ def main():
         brand_price_level_median.rename(columns={'item_price_level':'brand_price_level_median'}, inplace=True)
         df = pd.merge(df, brand_price_level_median, on=['item_brand_id'], how='left')
         del brand_price_level_median
-        # # brand_price_level_mode 写法有问题
-        # item_feat_set.add('brand_price_level_mode')
-        # brand_price_level_mode = tmp.mode().reset_index()
-        # brand_price_level_mode.rename(columns={'item_price_level':'brand_price_level_mode'}, inplace=True)
-        # df = pd.merge(df, brand_price_level_mode, on=['item_brand_id'], how='left')
-        # del brand_price_level_mode
+        # brand_price_level_mode 写法有问题
+        item_feat_set.add('brand_price_level_mode')
+        brand_price_level_mode = tmp.agg(lambda x: np.mean(pd.Series.mode(x))).reset_index()
+        brand_price_level_mode.rename(columns={'item_price_level':'brand_price_level_mode'}, inplace=True)
+        df = pd.merge(df, brand_price_level_mode, on=['item_brand_id'], how='left')
+        del brand_price_level_mode
         del tmp
         # cate_price_level_avg
         item_feat_set.add('cate_price_level_avg')
@@ -402,12 +402,12 @@ def main():
         cate_price_level_median.rename(columns={'item_price_level':'cate_price_level_median'}, inplace=True)
         df = pd.merge(df, cate_price_level_median, on=['item_second_cate'], how='left')
         del cate_price_level_median
-        # # cate_price_level_mode
-        # item_feat_set.add('cate_price_level_mode')
-        # cate_price_level_mode = tmp.mode().reset_index()
-        # cate_price_level_mode.rename(columns={'item_price_level':'cate_price_level_mode'}, inplace=True)
-        # df = pd.merge(df, cate_price_level_mode, on=['item_second_cate'], how='left')
-        # del cate_price_level_mode
+        # cate_price_level_mode
+        item_feat_set.add('cate_price_level_mode')
+        cate_price_level_mode = tmp.agg(lambda x: np.mean(pd.Series.mode(x))).reset_index()
+        cate_price_level_mode.rename(columns={'item_price_level':'cate_price_level_mode'}, inplace=True)
+        df = pd.merge(df, cate_price_level_mode, on=['item_second_cate'], how='left')
+        del cate_price_level_mode
         del tmp
         # ==========================================================================================
         ## shop_feature
