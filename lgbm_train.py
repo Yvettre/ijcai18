@@ -53,7 +53,7 @@ params = {
     'task': 'train',
     'boosting': 'gbdt',
     'objective': 'binary',
-    'learning_rate': 0.02,
+    'learning_rate': 0.017,
     'min_split_gain': 1.0,
     'metric': {'binary_logloss'},
     'metric_freq': 1,
@@ -64,7 +64,7 @@ params = {
     'bagging_fraction': 0.7,
     'bagging_freq': 5,
     'verbose': -1,
-    'min_data_in_leaf': 100,    
+    'min_data_in_leaf': 100,
     'max_depth':6,
     'min_sum_hessian_in_leaf': 6,
 }
@@ -125,10 +125,22 @@ def submit():
     print bak_file
     print y.mean()
 
+def debug():
+    gbm = joblib.load('model/gbm')
+    id_val = val_df['instance_id']
+    y = gbm.predict(data_val, num_iteration=gbm.best_iteration)
+    assert len(y) == len(label_val), 'length not match: {} vs. {}'.format(len(y), len(label_val))
+    result = pd.DataFrame({'instance_id':id_val,'is_trade':label_val,'predicted_score':y})
+    result['diff'] = np.abs(result['is_trade'] - result['predicted_score'])
+    result.sort_values(by='diff', ascending=False, inplace=True)
+    result.to_csv('debug/result_debug.csv', index=False)
+
 
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == 'submit':
         submit()
+    if len(sys.argv) == 2 and sys.argv[1] == 'debug':
+        debug()
     else:
         train()
 

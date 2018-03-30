@@ -1,0 +1,4 @@
+*
+!.gitignore
+!watch.sql
+!exec.sh
