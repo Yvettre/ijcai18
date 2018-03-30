@@ -340,6 +340,12 @@ def main():
         brand_price_level_avg.rename(columns={'item_price_level':'brand_price_level_avg'}, inplace=True)
         df = pd.merge(df, brand_price_level_avg, on=['item_brand_id'], how='left')
         del brand_price_level_avg
+        # above_brand_price_level_avg_value
+        item_feat_set.add('above_brand_price_level_avg_value')
+        df['above_brand_price_level_avg_value'] = df['item_price_level'] - df['brand_price_level_avg']
+        # above_brand_price_level_avg_rate
+        item_feat_set.add('above_brand_price_level_avg_rate')
+        df['above_brand_price_level_avg_rate'] = df['above_brand_price_level_avg_value'] / df['brand_price_level_avg']
         # brand_price_level_min
         item_feat_set.add('brand_price_level_min')
         brand_price_level_min = tmp.min().reset_index()
@@ -364,12 +370,12 @@ def main():
         brand_price_level_median.rename(columns={'item_price_level':'brand_price_level_median'}, inplace=True)
         df = pd.merge(df, brand_price_level_median, on=['item_brand_id'], how='left')
         del brand_price_level_median
-        # # brand_price_level_mode 写法有问题
-        # item_feat_set.add('brand_price_level_mode')
-        # brand_price_level_mode = tmp.mode().reset_index()
-        # brand_price_level_mode.rename(columns={'item_price_level':'brand_price_level_mode'}, inplace=True)
-        # df = pd.merge(df, brand_price_level_mode, on=['item_brand_id'], how='left')
-        # del brand_price_level_mode
+        # brand_price_level_mode
+        item_feat_set.add('brand_price_level_mode')
+        brand_price_level_mode = tmp.agg(lambda x: np.mean(pd.Series.mode(x))).reset_index()
+        brand_price_level_mode.rename(columns={'item_price_level':'brand_price_level_mode'}, inplace=True)
+        df = pd.merge(df, brand_price_level_mode, on=['item_brand_id'], how='left')
+        del brand_price_level_mode
         del tmp
         # ------------------------------------------------------------------------------------------
         # cate_price_level_avg
@@ -379,6 +385,12 @@ def main():
         cate_price_level_avg.rename(columns={'item_price_level':'cate_price_level_avg'}, inplace=True)
         df = pd.merge(df, cate_price_level_avg, on=['item_second_cate'], how='left')
         del cate_price_level_avg
+        # above_cate_price_level_avg_value
+        item_feat_set.add('above_cate_price_level_avg_value')
+        df['above_cate_price_level_avg_value'] = df['item_price_level'] - df['cate_price_level_avg']
+        # above_cate_price_level_avg_rate
+        item_feat_set.add('above_cate_price_level_avg_rate')
+        df['above_cate_price_level_avg_rate'] = df['above_cate_price_level_avg_value'] / df['cate_price_level_avg']
         # cate_price_level_min
         item_feat_set.add('cate_price_level_min')
         cate_price_level_min = tmp.min().reset_index()
@@ -403,12 +415,12 @@ def main():
         cate_price_level_median.rename(columns={'item_price_level':'cate_price_level_median'}, inplace=True)
         df = pd.merge(df, cate_price_level_median, on=['item_second_cate'], how='left')
         del cate_price_level_median
-        # # cate_price_level_mode
-        # item_feat_set.add('cate_price_level_mode')
-        # cate_price_level_mode = tmp.mode().reset_index()
-        # cate_price_level_mode.rename(columns={'item_price_level':'cate_price_level_mode'}, inplace=True)
-        # df = pd.merge(df, cate_price_level_mode, on=['item_second_cate'], how='left')
-        # del cate_price_level_mode
+        # cate_price_level_mode
+        item_feat_set.add('cate_price_level_mode')
+        cate_price_level_mode = tmp.agg(lambda x: np.mean(pd.Series.mode(x))).reset_index()
+        cate_price_level_mode.rename(columns={'item_price_level':'cate_price_level_mode'}, inplace=True)
+        df = pd.merge(df, cate_price_level_mode, on=['item_second_cate'], how='left')
+        del cate_price_level_mode
         del tmp
         # ==========================================================================================
         ## shop_feature
@@ -469,6 +481,12 @@ def main():
         shop_price_level_avg.rename(columns={'item_price_level':'shop_price_level_avg'}, inplace=True)
         df = pd.merge(df, shop_price_level_avg, on=['shop_id'], how='left')
         del shop_price_level_avg
+        # above_shop_price_level_avg_value
+        item_feat_set.add('above_shop_price_level_avg_value')
+        df['above_shop_price_level_avg_value'] = df['item_price_level'] - df['shop_price_level_avg']
+        # above_shop_price_level_avg_rate
+        item_feat_set.add('above_shop_price_level_avg_rate')
+        df['above_shop_price_level_avg_rate'] = df['above_shop_price_level_avg_value'] / df['shop_price_level_avg']
         # ==========================================================================================
         ## user_feature
         # user_gender_trade_num
@@ -540,43 +558,49 @@ def main():
         df['user_age_trade_rate'] = df['user_age_trade_num'] / (1 + df['user_age_view_num'])
         df['user_age_trade_rate'].fillna(0, inplace=True)
         # ------------------------------------------------------------------------------------------     
-        # user_view_price_level_avg
-        item_feat_set.add('user_view_price_level_avg')
-        tmp = df_feat[['user_id', 'item_price_level']].groupby('user_id')
-        user_view_price_level_avg = tmp.mean().reset_index()
-        user_view_price_level_avg.rename(columns={'item_price_level':'user_view_price_level_avg'}, inplace=True)
-        df = pd.merge(df, user_view_price_level_avg, on=['user_id'], how='left')
-        del user_view_price_level_avg
-        # user_view_price_level_min
-        item_feat_set.add('user_view_price_level_min')
-        user_view_price_level_min = tmp.min().reset_index()
-        user_view_price_level_min.rename(columns={'item_price_level':'user_view_price_level_min'}, inplace=True)
-        df = pd.merge(df, user_view_price_level_min, on=['user_id'], how='left')
-        del user_view_price_level_min
-        # user_view_price_level_max
-        item_feat_set.add('user_view_price_level_max')
-        user_view_price_level_max = tmp.max().reset_index()
-        user_view_price_level_max.rename(columns={'item_price_level':'user_view_price_level_max'}, inplace=True)
-        df = pd.merge(df, user_view_price_level_max, on=['user_id'], how='left')
-        del user_view_price_level_max
-        # user_view_price_level_std
-        item_feat_set.add('user_view_price_level_std')
-        user_view_price_level_std = tmp.std().reset_index()
-        user_view_price_level_std.rename(columns={'item_price_level':'user_view_price_level_std'}, inplace=True)
-        df = pd.merge(df, user_view_price_level_std, on=['user_id'], how='left')
-        del user_view_price_level_std
-        # user_view_price_level_median
-        item_feat_set.add('user_view_price_level_median')
-        user_view_price_level_median = tmp.median().reset_index()
-        user_view_price_level_median.rename(columns={'item_price_level':'user_view_price_level_median'}, inplace=True)
-        df = pd.merge(df, user_view_price_level_median, on=['user_id'], how='left')
-        del user_view_price_level_median
-        # # user_view_price_level_mode
-        # item_feat_set.add('user_view_price_level_mode')
-        # user_view_price_level_mode = tmp.mode().reset_index()
-        # user_view_price_level_mode.rename(columns={'item_price_level':'user_view_price_level_mode'}, inplace=True)
-        # df = pd.merge(df, user_view_price_level_mode, on=['user_id'], how='left')
-        # del user_view_price_level_mode
+        # user_age_view_price_level_avg
+        user_feat_set.add('user_age_view_price_level_avg')
+        tmp = df_feat[['user_age_level', 'item_price_level']].groupby('user_age_level')
+        user_age_view_price_level_avg = tmp.mean().reset_index()
+        user_age_view_price_level_avg.rename(columns={'item_price_level':'user_age_view_price_level_avg'}, inplace=True)
+        df = pd.merge(df, user_age_view_price_level_avg, on=['user_age_level'], how='left')
+        del user_age_view_price_level_avg
+        # above_user_view_price_level_avg_value
+        user_feat_set.add('above_user_view_price_level_avg_value')
+        df['above_user_view_price_level_avg_value'] = df['user_age_view_price_level_avg'] - df['user_age_view_price_level_avg']
+        # above_user_view_price_level_avg_rate
+        user_feat_set.add('above_user_view_price_level_avg_rate')
+        df['above_user_view_price_level_avg_rate'] = df['above_user_view_price_level_avg_value'] / df['user_age_view_price_level_avg']
+        # user_age_view_price_level_min
+        user_feat_set.add('user_age_view_price_level_min')
+        user_age_view_price_level_min = tmp.min().reset_index()
+        user_age_view_price_level_min.rename(columns={'item_price_level':'user_age_view_price_level_min'}, inplace=True)
+        df = pd.merge(df, user_age_view_price_level_min, on=['user_age_level'], how='left')
+        del user_age_view_price_level_min
+        # user_age_view_price_level_max
+        user_feat_set.add('user_age_view_price_level_max')
+        user_age_view_price_level_max = tmp.max().reset_index()
+        user_age_view_price_level_max.rename(columns={'item_price_level':'user_age_view_price_level_max'}, inplace=True)
+        df = pd.merge(df, user_age_view_price_level_max, on=['user_age_level'], how='left')
+        del user_age_view_price_level_max
+        # user_age_view_price_level_std
+        user_feat_set.add('user_age_view_price_level_std')
+        user_age_view_price_level_std = tmp.std().reset_index()
+        user_age_view_price_level_std.rename(columns={'item_price_level':'user_age_view_price_level_std'}, inplace=True)
+        df = pd.merge(df, user_age_view_price_level_std, on=['user_age_level'], how='left')
+        del user_age_view_price_level_std
+        # user_age_view_price_level_median
+        user_feat_set.add('user_age_view_price_level_median')
+        user_age_view_price_level_median = tmp.median().reset_index()
+        user_age_view_price_level_median.rename(columns={'item_price_level':'user_age_view_price_level_median'}, inplace=True)
+        df = pd.merge(df, user_age_view_price_level_median, on=['user_age_level'], how='left')
+        del user_age_view_price_level_median
+        # user_age_view_price_level_mode
+        user_feat_set.add('user_age_view_price_level_mode')
+        user_age_view_price_level_mode = tmp.agg(lambda x: np.mean(pd.Series.mode(x))).reset_index()
+        user_age_view_price_level_mode.rename(columns={'item_price_level':'user_age_view_price_level_mode'}, inplace=True)
+        df = pd.merge(df, user_age_view_price_level_mode, on=['user_age_level'], how='left')
+        del user_age_view_price_level_mode
         del tmp
         # ==========================================================================================
         ## context_feature
@@ -739,6 +763,21 @@ def main():
         tmp = df[['user_id','context_time']].copy()
         tmp = tmp.groupby(['user_id', 'context_time']).size().reset_index().rename(columns={0:'today_user_query_hour'})
         df = pd.merge(df, tmp, on=['user_id', 'context_time'], how='left')
+        del tmp
+        leak_feat_set.add('today_item_query_hour')
+        tmp = df[['item_id','context_time']].copy()
+        tmp = tmp.groupby(['item_id','context_time']).size().reset_index().rename(columns={0:'today_item_query_hour'})
+        df = pd.merge(df, tmp, on=['item_id','context_time'], how='left')
+        del tmp
+        leak_feat_set.add('today_shop_query_hour')
+        tmp = df[['shop_id','context_time']].copy()
+        tmp = tmp.groupby(['shop_id','context_time']).size().reset_index().rename(columns={0:'today_shop_query_hour'})
+        df = pd.merge(df, tmp, on=['shop_id','context_time'], how='left')
+        del tmp
+        leak_feat_set.add('today_cate_query_hour')
+        tmp = df[['item_second_cate','context_time']].copy()
+        tmp = tmp.groupby(['item_second_cate','context_time']).size().reset_index().rename(columns={0:'today_cate_query_hour'})
+        df = pd.merge(df, tmp, on=['item_second_cate','context_time'], how='left')
         del tmp
         # ==========================================================================================
         df_list.append(df)
