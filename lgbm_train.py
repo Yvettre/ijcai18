@@ -139,7 +139,7 @@ def debug():
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == 'submit':
         submit()
-    if len(sys.argv) == 2 and sys.argv[1] == 'debug':
+    elif len(sys.argv) == 2 and sys.argv[1] == 'debug':
         debug()
     else:
         train()
