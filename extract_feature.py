@@ -21,7 +21,7 @@ import datetime
 # test_data : 
 #   dataset6: 2018-09-25 , features from 2018-09-23~2018-09-24
 
-hour_offset = 4
+hour_offset = 2
 
 def update_from_data_by_moment(x):
     '''estimate alpha, beta using moment estimation'''
@@ -131,7 +131,7 @@ def main():
         'data/round1_ijcai_18_train_20180301.txt', sep=' ')
     train_table.replace(-1, np.NaN, inplace=True)
     test_table = pd.read_csv(
-        'data/round1_ijcai_18_test_a_20180301.txt', sep=' ')
+        'data/round1_ijcai_18_test_b_20180418.txt', sep=' ')
     test_table.replace(-1, np.NaN, inplace=True)
 
     train_table.drop_duplicates(subset='instance_id', keep='first', inplace=True)
@@ -247,30 +247,30 @@ def main():
     test_table['shop_star_level'] = test_table['shop_star_level'] - 5000
     test_table['shop_total_score'] = 1.0*test_table['shop_score_service'] + 0.8*test_table['shop_score_delivery'] + 1.2*test_table['shop_score_description']
 
-    ## estimate alpha, beta
-    # item_cate_trade_num
-    item_cate_trade_num = train_table[['item_second_cate', 'context_day', 'is_trade']].copy()
-    item_cate_trade_num = item_cate_trade_num.groupby(['item_second_cate','context_day']).agg('sum').reset_index()
-    item_cate_trade_num.rename(columns={'is_trade': 'item_cate_trade_num'}, inplace=True)
-    # item_cate_not_trade_num
-    item_cate_not_trade_num = train_table[['item_second_cate',  'context_day', 'is_trade']].copy()
-    item_cate_not_trade_num['is_trade'] = 1 - item_cate_not_trade_num['is_trade']
-    item_cate_not_trade_num = item_cate_not_trade_num.groupby(['item_second_cate', 'context_day']).agg('sum').reset_index()
-    item_cate_not_trade_num.rename(columns={'is_trade': 'item_cate_not_trade_num'}, inplace=True)
-    df = pd.merge(item_cate_trade_num, item_cate_not_trade_num, on=['item_second_cate','context_day'], how='left')
-    del item_cate_trade_num, item_cate_not_trade_num
-    # get Bayes smooth
-    df.rename(columns={'item_second_cate':'id'}, inplace=True)
-    df['ctr'] = df['item_cate_trade_num'] / ( df['item_cate_trade_num'] + df['item_cate_not_trade_num'] )
-    mean = df[['id','ctr']].groupby(['id']).agg('mean').reset_index()
-    mean.rename(columns={'ctr':'mean'},inplace=True)
-    var = df[['id','ctr']].groupby(['id']).agg('var').reset_index()
-    var.rename(columns={'ctr':'var'}, inplace=True)
-    ctr_mean_var_in_cate = pd.merge(mean, var, on=['id'], how='left')
-    del df, mean, var
-    Bayes_smooth_tmp = ctr_mean_var_in_cate.apply(update_from_data_by_moment, axis=1)
-    Bayes_smooth = pd.DataFrame(data=list(Bayes_smooth_tmp.values), columns=['item_second_cate','alpha','beta'])
-    del ctr_mean_var_in_cate, Bayes_smooth_tmp
+    # ## estimate alpha, beta
+    # # item_cate_trade_num
+    # item_cate_trade_num = train_table[['item_second_cate', 'context_day', 'is_trade']].copy()
+    # item_cate_trade_num = item_cate_trade_num.groupby(['item_second_cate','context_day']).agg('sum').reset_index()
+    # item_cate_trade_num.rename(columns={'is_trade': 'item_cate_trade_num'}, inplace=True)
+    # # item_cate_not_trade_num
+    # item_cate_not_trade_num = train_table[['item_second_cate',  'context_day', 'is_trade']].copy()
+    # item_cate_not_trade_num['is_trade'] = 1 - item_cate_not_trade_num['is_trade']
+    # item_cate_not_trade_num = item_cate_not_trade_num.groupby(['item_second_cate', 'context_day']).agg('sum').reset_index()
+    # item_cate_not_trade_num.rename(columns={'is_trade': 'item_cate_not_trade_num'}, inplace=True)
+    # df = pd.merge(item_cate_trade_num, item_cate_not_trade_num, on=['item_second_cate','context_day'], how='left')
+    # del item_cate_trade_num, item_cate_not_trade_num
+    # # get Bayes smooth
+    # df.rename(columns={'item_second_cate':'id'}, inplace=True)
+    # df['ctr'] = df['item_cate_trade_num'] / ( df['item_cate_trade_num'] + df['item_cate_not_trade_num'] )
+    # mean = df[['id','ctr']].groupby(['id']).agg('mean').reset_index()
+    # mean.rename(columns={'ctr':'mean'},inplace=True)
+    # var = df[['id','ctr']].groupby(['id']).agg('var').reset_index()
+    # var.rename(columns={'ctr':'var'}, inplace=True)
+    # ctr_mean_var_in_cate = pd.merge(mean, var, on=['id'], how='left')
+    # del df, mean, var
+    # Bayes_smooth_tmp = ctr_mean_var_in_cate.apply(update_from_data_by_moment, axis=1)
+    # Bayes_smooth = pd.DataFrame(data=list(Bayes_smooth_tmp.values), columns=['item_second_cate','alpha','beta'])
+    # del ctr_mean_var_in_cate, Bayes_smooth_tmp
     
     df_list = []
     for day in xrange(20, 26):
@@ -303,11 +303,11 @@ def main():
         df['item_view_num'] = df['item_trade_num'] + df['item_not_trade_num']
         # item_trade_rate
         item_feat_set.add('item_trade_rate')
-        df = pd.merge(df, Bayes_smooth, on=['item_second_cate'], how='left')
-        df['item_trade_rate'] = df.apply(get_item_trade_rate, axis=1)
-        # df['item_trade_rate'] = df['item_trade_num'] / (1 + df['item_view_num'])
+        # df = pd.merge(df, Bayes_smooth, on=['item_second_cate'], how='left')
+        # df['item_trade_rate'] = df.apply(get_item_trade_rate, axis=1)
+        df['item_trade_rate'] = df['item_trade_num'] / (1 + df['item_view_num'])
         df['item_trade_rate'].fillna(0, inplace=True)
-        df.drop(['alpha','beta'], axis=1)
+        # df.drop(['alpha','beta'], axis=1)
         # ------------------------------------------------------------------------------------------        
         # item_brand_trade_num
         item_feat_set.add('item_brand_trade_num')
@@ -466,6 +466,30 @@ def main():
         df = pd.merge(df, cate_price_level_mode, on=['item_second_cate'], how='left')
         del cate_price_level_mode
         del tmp
+        # ------------------------------------------------------------------------------------------
+        ## cate_popular_price
+        # cate_price_trade_num
+        item_feat_set.add('cate_popular_price')
+        cate_price_trade_num = df_feat[['item_second_cate', 'item_price_level', 'is_trade']].groupby(['item_second_cate', 'item_price_level'])
+        cate_price_trade_num = cate_price_trade_num.agg('sum').reset_index()
+        cate_price_trade_num.rename(columns={'is_trade':'cate_price_trade_num'}, inplace=True)
+        df = pd.merge(df, cate_price_trade_num, on=['item_second_cate', 'item_price_level'], how='left')
+        del cate_price_trade_num
+        # cate_price_not_trade_num
+        item_feat_set.add('cate_price_not_trade_num')
+        cate_price_not_trade_num = df_feat[['item_second_cate', 'item_price_level', 'is_trade']].copy()
+        cate_price_not_trade_num['is_trade'] = 1 - cate_price_not_trade_num['is_trade']
+        cate_price_not_trade_num = cate_price_not_trade_num.groupby(['item_second_cate', 'item_price_level']).agg('sum').reset_index()
+        cate_price_not_trade_num.rename(columns={'is_trade': 'cate_price_not_trade_num'}, inplace=True)
+        df = pd.merge(df, cate_price_not_trade_num, on=['item_second_cate', 'item_price_level'], how='left')
+        del cate_price_not_trade_num
+        # cate_price_view_num
+        item_feat_set.add('cate_price_view_num')
+        df['cate_price_view_num'] = df['cate_price_trade_num'] + df['cate_price_not_trade_num']
+        # cate_popular_price
+        item_feat_set.add('cate_popular_price')
+        df['cate_popular_price'] = df['cate_price_trade_num'] / (1 + df['cate_price_view_num'])
+        df['cate_popular_price'].fillna(0, inplace=True)
         # ==========================================================================================
         ## shop_feature
         # shop_trade_num

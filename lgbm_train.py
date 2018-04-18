@@ -25,6 +25,10 @@ train_df = pd.read_csv('data/train_feat.csv')
 val_df = pd.read_csv('data/val_feat.csv')
 test_df = pd.read_csv('data/test_feat.csv')
 
+# train_df['time_trade_rate_x_today_cate_query_hour'] = train_df['time_trade_rate'] * train_df['today_cate_query_hour']
+# val_df['time_trade_rate_x_today_cate_query_hour'] = val_df['time_trade_rate'] * val_df['today_cate_query_hour']
+# test_df['time_trade_rate_x_today_cate_query_hour'] = test_df['time_trade_rate'] * test_df['today_cate_query_hour']
+
 train_df['context_page_id_1'] = (train_df['context_page_id'] <= 1)
 test_df['context_page_id_1'] = (test_df['context_page_id'] <= 1)
 val_df['context_page_id_1'] = (val_df['context_page_id'] <= 1)
@@ -139,7 +143,7 @@ def debug():
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == 'submit':
         submit()
-    if len(sys.argv) == 2 and sys.argv[1] == 'debug':
+    elif len(sys.argv) == 2 and sys.argv[1] == 'debug':
         debug()
     else:
         train()
