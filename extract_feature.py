@@ -21,7 +21,7 @@ import datetime
 # test_data : 
 #   dataset6: 2018-09-25 , features from 2018-09-23~2018-09-24
 
-hour_offset = 4
+hour_offset = 2
 
 def get_match_level(s):
     item_category_list = s['item_category_list'].split(';')
@@ -114,7 +114,7 @@ def main():
         'data/round1_ijcai_18_train_20180301.txt', sep=' ')
     train_table.replace(-1, np.NaN, inplace=True)
     test_table = pd.read_csv(
-        'data/round1_ijcai_18_test_a_20180301.txt', sep=' ')
+        'data/round1_ijcai_18_test_b_20180418.txt', sep=' ')
     test_table.replace(-1, np.NaN, inplace=True)
 
     train_table.drop_duplicates(subset='instance_id', keep='first', inplace=True)

@@ -60,3 +60,4 @@ target/
 result/ding_demo.xlsx
 feature_importance.txt
 feature_importance_xgb.txt
+feature_importance*
