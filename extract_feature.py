@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn import preprocessing
 
 import datetime
+import time
 
 # train_data : 2018-09-18 ~ 2018-09-24
 # test_data : 2018-09-25
@@ -21,7 +22,7 @@ import datetime
 # test_data : 
 #   dataset6: 2018-09-25 , features from 2018-09-23~2018-09-24
 
-hour_offset = 2
+hour_offset = 12
 
 def get_match_level(s):
     item_category_list = s['item_category_list'].split(';')
@@ -110,11 +111,13 @@ def get_caterank_in_predict(s):
     
 
 def main():
+    time_node1 = time.clock()
+
     train_table = pd.read_csv(
-        'data/round1_ijcai_18_train_20180301.txt', sep=' ')
+        'data/round2_train.txt', sep=' ')
     train_table.replace(-1, np.NaN, inplace=True)
     test_table = pd.read_csv(
-        'data/round1_ijcai_18_test_b_20180418.txt', sep=' ')
+        'data/round2_ijcai_18_test_a_20180425.txt', sep=' ')
     test_table.replace(-1, np.NaN, inplace=True)
 
     train_table.drop_duplicates(subset='instance_id', keep='first', inplace=True)
@@ -230,15 +233,35 @@ def main():
     test_table['shop_star_level'] = test_table['shop_star_level'] - 5000
     test_table['shop_total_score'] = 1.0*test_table['shop_score_service'] + 0.8*test_table['shop_score_delivery'] + 1.2*test_table['shop_score_description']
 
+    time_node2 = time.clock()
+    time_counter_tmp = time_node2 - time_node1
+    print 'cost time before for loop: %dh-%dm-%ds'%(time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)
     
     df_list = []
-    for day in xrange(20, 26):
-        print 'day: {}'.format(day)
-        if day < 25:
-            df = train_table[train_table['context_day'] == day].copy()
-        else:
+    # for day in xrange(20, 26):
+    for item in xrange(2, 14):
+        day = item/2 + 1
+        noon_flag = item%2  # 0是早上，1是下午
+        print 'day: {}, noon_flag: {}'.format(day, noon_flag)
+        time_node3 = time.clock()
+        
+        # if day < 25:
+        if day < 7 or (day == 7 and noon_flag == 0):
+            # df = train_table[train_table['context_day'] == day].copy()
+            if noon_flag==0:  # 早上
+                df = train_table[(train_table['context_day'] == day)&(train_table['context_time']<hour_offset)].copy()
+                # 复赛数据offset
+                df_feat = train_table[(train_table['context_day'] == day-1) | (train_table['context_day']==day-2)]
+            elif noon_flag==1:  #下午
+                df = train_table[(train_table['context_day'] == day)&(train_table['context_time']>=hour_offset)].copy()
+                # 复赛数据offset
+                df_feat = train_table[((train_table['context_day'] == day)&(train_table['context_time']<hour_offset)) | (train_table['context_day'] == day-1) | ((train_table['context_day']==day-2)&(train_table['context_time']>=hour_offset))]
+        elif day == 7 and noon_flag == 1:
             df = test_table.copy()
-        df_feat = train_table[(train_table['context_day'] == day-1) | ((train_table['context_day']==day-2)&(train_table['context_time']>=hour_offset))]
+            # 复赛数据offset
+            df_feat = train_table[(train_table['context_day'] == day) | (train_table['context_day'] == day-1) | ((train_table['context_day']==day-2)&(train_table['context_time']>=hour_offset))]
+        # 初赛数据offset
+        # df_feat = train_table[(train_table['context_day'] == day-1) | ((train_table['context_day']==day-2)&(train_table['context_time']>=hour_offset))]
         # df_feat = train_table[(train_table['context_day'] == day-1) | (train_table['context_day'] == day-2)]
         # ==========================================================================================
         ## item_feature
@@ -782,6 +805,10 @@ def main():
         # ==========================================================================================
         df_list.append(df)
 
+        time_node4 = time.clock()
+        time_counter_tmp = time_node4 - time_node3
+        print '%d day cost time: %dh-%dm-%ds'%(time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)
+
         
 
     train_table = pd.concat(df_list[:-2], axis=0)
@@ -798,9 +825,13 @@ def main():
     print val_table['context_day'][:10]
     print test_table['context_day'][:10]
 
-    train_feat.to_csv('data/train_feat.csv', index=False)
-    val_feat.to_csv('data/val_feat.csv', index=False)
-    test_feat.to_csv('data/test_feat.csv', index=False)
+    train_feat.to_csv('data/qing/train_feat.csv', index=False)
+    val_feat.to_csv('data/qing/val_feat.csv', index=False)
+    test_feat.to_csv('data/qing/test_feat.csv', index=False)
+
+    time_node5 = time.clock()
+    time_counter_tmp = time_node5 - time_node1
+    print 'extract_features.py cost time: %dh-%dm-%ds'%(time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)
 
 
 if __name__ == '__main__':
