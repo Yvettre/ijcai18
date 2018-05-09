@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import sys
+import time
 
 from sklearn.cross_validation import KFold
 from sklearn.externals import joblib
@@ -21,9 +22,9 @@ def log_loss(y_list, p_list):
     ans = -ans / n
     return ans
 
-train_df = pd.read_csv('data/train_feat.csv')
-val_df = pd.read_csv('data/val_feat.csv')
-test_df = pd.read_csv('data/test_feat.csv')
+train_df = pd.read_csv('data/ding/train_feat.csv')
+val_df = pd.read_csv('data/ding/val_feat.csv')
+test_df = pd.read_csv('data/ding/test_feat.csv')
 
 # train_df['time_trade_rate_x_today_cate_query_hour'] = train_df['time_trade_rate'] * train_df['today_cate_query_hour']
 # val_df['time_trade_rate_x_today_cate_query_hour'] = val_df['time_trade_rate'] * val_df['today_cate_query_hour']
@@ -74,6 +75,8 @@ params = {
 }
 
 def train():
+    time_node1 = time.clock()
+
     feature_name = list(train_df.drop(['instance_id', 'is_trade'], axis=1).columns)
     print feature_name
 
@@ -100,7 +103,7 @@ def train():
     y_pred = gbm.predict(data_val, num_iteration=gbm.best_iteration)
     val_loss = log_loss(label_val, y_pred)
 
-    joblib.dump(gbm, 'model/gbm')
+    joblib.dump(gbm, 'model/ding/gbm')
     print 'train_loss: {:4}, val_loss: {:4}'.format(train_loss, val_loss)
     with open('feature_importance.txt','w') as f:
         importance = gbm.feature_importance()
@@ -112,10 +115,14 @@ def train():
         for item in pair:
             string = item[0] + ', ' + str(item[1]) + '\n'
             f.write(string)
+    
+    time_node2 = time.clock()
+    time_counter_tmp = time_node2 - time_node1
+    print 'lgbm_train.py cost whole time: %dh-%dm-%ds'%(time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)
 
     
 def submit():
-    gbm = joblib.load('model/gbm')
+    gbm = joblib.load('model/ding/gbm')
 
     y = gbm.predict(data_test, num_iteration=gbm.best_iteration)
 
@@ -123,14 +130,14 @@ def submit():
     result = pd.concat([id_test, y], axis=1)
     time_format = '%Y-%m-%d-%H-%M-%S'
     time_now = datetime.datetime.now()
-    bak_file = 'result/result_%s.csv'%time_now.strftime(time_format)
+    bak_file = 'result/result_%s.txt'%time_now.strftime(time_format)
     result.to_csv(bak_file, index=False, sep=' ', mode='wb') # for backup
-    result.to_csv('result/result.csv', index=False, sep=' ', mode='wb')
+    # result.to_csv('result/result.csv', index=False, sep=' ', mode='wb')
     print bak_file
     print y.mean()
 
 def debug():
-    gbm = joblib.load('model/gbm')
+    gbm = joblib.load('model/ding/gbm')
     id_val = val_df['instance_id']
     y = gbm.predict(data_val, num_iteration=gbm.best_iteration)
     assert len(y) == len(label_val), 'length not match: {} vs. {}'.format(len(y), len(label_val))

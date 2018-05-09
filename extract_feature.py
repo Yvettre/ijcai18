@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn import preprocessing
 
 import datetime
+import time
 
 # train_data : 2018-09-18 ~ 2018-09-24
 # test_data : 2018-09-25
@@ -21,7 +22,23 @@ import datetime
 # test_data : 
 #   dataset6: 2018-09-25 , features from 2018-09-23~2018-09-24
 
-hour_offset = 2
+# 复赛数据
+# train_data : 2018-08-31 00:00:00 ~ 2018-09-07 11:59:59
+# test_data  : 2018-09-07 12:00:00 ~ 2018-09-07 23:59:54
+
+# sliding 2 days:
+# train_data : 
+#   dataset1: 2018-09-02 12:00:00 ~ 2018-09-02 23:59:59, features from 2018-08-31 12:00:00 ~ 2018-09-02 11:59:59
+#   dataset2: 2018-09-03 12:00:00 ~ 2018-09-03 23:59:59, features from 2018-09-01 12:00:00 ~ 2018-09-03 11:59:59
+#   dataset3: 2018-09-04 12:00:00 ~ 2018-09-04 23:59:59, features from 2018-09-02 12:00:00 ~ 2018-09-04 11:59:59
+#   dataset4: 2018-09-05 12:00:00 ~ 2018-09-05 23:59:59, features from 2018-09-03 12:00:00 ~ 2018-09-05 11:59:59
+# val_data :
+#   dataset5: 2018-09-06 12:00:00 ~ 2018-09-06 23:59:59,  features from 2018-09-04 12:00:00 ~ 2018-09-06 11:59:59
+# test_data : 
+#   dataset6: 2018-09-07 12:00:00 ~ 2018-09-07 23:59:54 , features from 2018-09-05 12:00:00 ~ 2018-09-07 11:59:59
+
+# hour_offset = 2
+hour_offset = 12
 
 def update_from_data_by_moment(x):
     '''estimate alpha, beta using moment estimation'''
@@ -127,11 +144,13 @@ def get_caterank_in_predict(s):
     
 
 def main():
+    time_node1 = time.clock()
+
     train_table = pd.read_csv(
-        'data/round1_ijcai_18_train_20180301.txt', sep=' ')
+        'data/round2_train.txt', sep=' ')
     train_table.replace(-1, np.NaN, inplace=True)
     test_table = pd.read_csv(
-        'data/round1_ijcai_18_test_b_20180418.txt', sep=' ')
+        'data/round2_ijcai_18_test_a_20180425.txt', sep=' ')
     test_table.replace(-1, np.NaN, inplace=True)
 
     train_table.drop_duplicates(subset='instance_id', keep='first', inplace=True)
@@ -272,14 +291,24 @@ def main():
     # Bayes_smooth = pd.DataFrame(data=list(Bayes_smooth_tmp.values), columns=['item_second_cate','alpha','beta'])
     # del ctr_mean_var_in_cate, Bayes_smooth_tmp
     
+    time_node2 = time.clock()
+    time_counter_tmp = time_node2 - time_node1
+    print 'time before for loop: %dh-%dm-%ds'%(time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)
     df_list = []
-    for day in xrange(20, 26):
+    # for day in xrange(20, 26):
+    for day in xrange(2, 8):        
         print 'day: {}'.format(day)
-        if day < 25:
-            df = train_table[train_table['context_day'] == day].copy()
+        time_node3 = time.clock()
+        # if day < 25:
+        if day < 7:            
+            # df = train_table[train_table['context_day'] == day].copy()
+            df = train_table[(train_table['context_day'] == day) & (train_table['context_time']>=hour_offset)].copy()            
         else:
             df = test_table.copy()
-        df_feat = train_table[(train_table['context_day'] == day-1) | ((train_table['context_day']==day-2)&(train_table['context_time']>=hour_offset))]
+        # 初赛数据offset特征
+        # df_feat = train_table[(train_table['context_day'] == day-1) | ((train_table['context_day']==day-2)&(train_table['context_time']>=hour_offset))]
+        # 复赛数据offset特征
+        df_feat = train_table[((train_table['context_day'] == day)&(train_table['context_time']<hour_offset)) | (train_table['context_day'] == day-1) | ((train_table['context_day']==day-2)&(train_table['context_time']>=hour_offset))]
         # df_feat = train_table[(train_table['context_day'] == day-1) | (train_table['context_day'] == day-2)]
         # ==========================================================================================
         ## item_feature
@@ -849,8 +878,9 @@ def main():
         del tmp
         # ==========================================================================================
         df_list.append(df)
-
-        
+        time_node4 = time.clock()
+        time_counter_tmp = time_node4 - time_node3
+        print '%d day cost time: %dh-%dm-%ds'%(day, time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)        
 
     train_table = pd.concat(df_list[:-2], axis=0)
     val_table = df_list[-2]
@@ -866,9 +896,13 @@ def main():
     print val_table['context_day'][:10]
     print test_table['context_day'][:10]
 
-    train_feat.to_csv('data/train_feat.csv', index=False)
-    val_feat.to_csv('data/val_feat.csv', index=False)
-    test_feat.to_csv('data/test_feat.csv', index=False)
+    train_feat.to_csv('data/ding/train_feat.csv', index=False)
+    val_feat.to_csv('data/ding/val_feat.csv', index=False)
+    test_feat.to_csv('data/ding/test_feat.csv', index=False)
+
+    time_node5 = time.clock()
+    time_counter_tmp = time_node5 - time_node1
+    print 'extract_features.py cost whole time: %dh-%dm-%ds'%(time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)
 
 
 if __name__ == '__main__':

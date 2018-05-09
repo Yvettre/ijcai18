@@ -4,6 +4,7 @@ import xgboost as xgb
 import pandas as pd
 import numpy as np
 import datetime
+import time
 import sys
 
 from sklearn.externals import joblib
@@ -69,6 +70,7 @@ params = {'booster': 'gbtree',
 
 
 def train():
+    time_node1 = time.clock()
     
     watchlist = [(dataset_train, 'train'), (dataset_val, 'val')]
     model = xgb.train(params, dataset_train, num_boost_round=3000, evals=watchlist, early_stopping_rounds=200)
@@ -80,7 +82,7 @@ def train():
     y_pred = model.predict(dataset_val, ntree_limit=model.best_iteration)
     val_loss = log_loss(label_val, y_pred)
     
-    joblib.dump(model, 'model/xgb_model')
+    joblib.dump(model, 'model/ding/xgb_model')
 
     print 'train_loss: {:4}, val_loss: {:4}'.format(train_loss, val_loss)
     with open('feature_importance_xgb.txt','w') as f:
@@ -91,18 +93,22 @@ def train():
         for (key,value) in feature_score:
             fs.append("{0},{1}\n".format(key,value))
         f.writelines(fs)
+    
+    time_node2 = time.clock()
+    time_counter_tmp = time_node2 - time_node1
+    print 'lgbm_train.py cost whole time: %dh-%dm-%ds'%(time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)
 
 def submit():
     
-    model = joblib.load('model/xgb_model')
+    model = joblib.load('model/ding/xgb_model')
     y = model.predict(dataset_test, ntree_limit=model.best_iteration)
     y = pd.Series(y.T, name='predicted_score')
     result = pd.concat([id_test, y], axis=1)
     time_format = '%Y-%m-%d-%H-%M-%S'
     time_now = datetime.datetime.now()
-    bak_file = 'result/result_%s.csv'%time_now.strftime(time_format)
+    bak_file = 'result/result_%s.txt'%time_now.strftime(time_format)
     result.to_csv(bak_file, index=False, sep=' ', mode='wb') # for backup
-    result.to_csv('result/result.csv', index=False, sep=' ', mode='wb')
+    # result.to_csv('result/result.csv', index=False, sep=' ', mode='wb')
     print bak_file
     print y.mean()
 
