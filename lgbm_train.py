@@ -58,7 +58,7 @@ params = {
     'task': 'train',
     'boosting': 'gbdt',
     'objective': 'binary',
-    'learning_rate': 0.02,
+    'learning_rate': 0.017,
     'min_split_gain': 1.0,
     'metric': {'binary_logloss'},
     'metric_freq': 1,
@@ -69,9 +69,9 @@ params = {
     'bagging_fraction': 0.7,
     'bagging_freq': 5,
     'verbose': -1,
-    'min_data_in_leaf': 2400,
+    'min_data_in_leaf': 2000,
     'max_depth':6,
-    'min_sum_hessian_in_leaf': 6,
+    'min_sum_hessian_in_leaf': 120,
 }
 
 def train():

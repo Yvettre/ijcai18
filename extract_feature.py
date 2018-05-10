@@ -807,7 +807,7 @@ def main():
 
         time_node4 = time.clock()
         time_counter_tmp = time_node4 - time_node3
-        print '%d day cost time: %dh-%dm-%ds'%(time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)
+        print '%d day %d noon cost time: %dh-%dm-%ds'%(day, noon_flag, time_counter_tmp/3600, (time_counter_tmp%3600)/60, (time_counter_tmp%3600)%60)
 
         
 
