@@ -150,7 +150,7 @@ def main():
         'data/round2_train.txt', sep=' ')
     train_table.replace(-1, np.NaN, inplace=True)
     test_table = pd.read_csv(
-        'data/round2_ijcai_18_test_a_20180425.txt', sep=' ')
+        'data/round2_ijcai_18_test_b_20180510.txt', sep=' ')
     test_table.replace(-1, np.NaN, inplace=True)
 
     train_table.drop_duplicates(subset='instance_id', keep='first', inplace=True)
@@ -302,7 +302,8 @@ def main():
         # if day < 25:
         if day < 7:            
             # df = train_table[train_table['context_day'] == day].copy()
-            df = train_table[(train_table['context_day'] == day) & (train_table['context_time']>=hour_offset)].copy()            
+            # df = train_table[(train_table['context_day'] == day) & (train_table['context_time']>=hour_offset)].copy()            
+            df = train_table[((train_table['context_day'] == day) & (train_table['context_time']>=hour_offset)) | ((train_table['context_day'] == day+1) & (train_table['context_time']<hour_offset))].copy()            
         else:
             df = test_table.copy()
         # 初赛数据offset特征
@@ -896,9 +897,9 @@ def main():
     print val_table['context_day'][:10]
     print test_table['context_day'][:10]
 
-    train_feat.to_csv('data/ding/train_feat.csv', index=False)
-    val_feat.to_csv('data/ding/val_feat.csv', index=False)
-    test_feat.to_csv('data/ding/test_feat.csv', index=False)
+    train_feat.to_csv('data/newheihei/train_feat.csv', index=False)
+    val_feat.to_csv('data/newheihei/val_feat.csv', index=False)
+    test_feat.to_csv('data/newheihei/test_feat.csv', index=False)
 
     time_node5 = time.clock()
     time_counter_tmp = time_node5 - time_node1

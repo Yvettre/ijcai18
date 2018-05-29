@@ -21,9 +21,9 @@ def log_loss(y_list, p_list):
     ans = -ans / n
     return ans
 
-train_df = pd.read_csv('data/train_feat.csv')
-val_df = pd.read_csv('data/val_feat.csv')
-test_df = pd.read_csv('data/test_feat.csv')
+train_df = pd.read_csv('data/heihei/train_feat.csv')
+val_df = pd.read_csv('data/heihei/val_feat.csv')
+test_df = pd.read_csv('data/heihei/test_feat.csv')
 
 train_df['context_page_id_1'] = (train_df['context_page_id'] <= 1)
 test_df['context_page_id_1'] = (test_df['context_page_id'] <= 1)
@@ -44,8 +44,8 @@ data_val = val_df.drop(['instance_id', 'is_trade'], axis=1)
 id_test = test_df['instance_id']
 data_test = test_df.drop(['instance_id'], axis=1)
 
-p_xgb = 0.55
-p_lgb = 0.45
+p_xgb = 0.3
+p_lgb = 0.7
 
 model_xgb = joblib.load('model/ding/xgb_model')
 model_lgb = joblib.load('model/ding/gbm')

@@ -21,9 +21,9 @@ def log_loss(y_list, p_list):
     ans = -ans / n
     return ans
 
-train_df = pd.read_csv('data/train_feat.csv')
-val_df = pd.read_csv('data/val_feat.csv')
-test_df = pd.read_csv('data/test_feat.csv')
+train_df = pd.read_csv('data/heihei/train_feat.csv')
+val_df = pd.read_csv('data/heihei/val_feat.csv')
+test_df = pd.read_csv('data/heihei/test_feat.csv')
 #cross
 # train_df['time_trade_rate_x_today_cate_query_hour'] = train_df['time_trade_rate'] * train_df['today_cate_query_hour']
 # val_df['time_trade_rate_x_today_cate_query_hour'] = val_df['time_trade_rate'] * val_df['today_cate_query_hour']
